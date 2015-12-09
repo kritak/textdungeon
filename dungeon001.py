@@ -12,11 +12,32 @@ key=0
 mp=100
 healthpot=0
 
+helptext="""
+k = key 
+d = door
+b = boss
+f = food
+$ = gold
+m = mage 
+c = chest
+s = stairs (next lvl)
+t = trap
+w = wolve
+F = Fountain
+l = lord
+q = quest
+v = vendor
+p = pot
+e = eat
+tp = teleport"""
+
 while hp>0:
 		
 	print(dungeon[:x]+hero+dungeon[x+1:])
 	c=input("food: {} hunger: {} gold: {} hp: {} key:{} mp: {} healthpot: {} command?".format(food,hunger,gold,hp,key,mp,healthpot))
 	dx=0     # delta x gewünschte richtung
+	if c == "h" or c == "help":
+		print(helptext)
 	if c == "a":
 		dx -= 1
 	if c == "d":
