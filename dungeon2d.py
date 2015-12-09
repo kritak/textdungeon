@@ -33,21 +33,42 @@ dungeon="""
 # hero start posi 1/1
 
 hp=10
-x=2
-y=2
+x=1
+y=1
+dx=0
+dy=0
 
 while hp >0:
-	print(dungeon[:x+52*y]+"@"+dungeon[x+52*y+1:])
-	c = input("command?")
+	
+	line_number = 0
+	for line in dungeon.split():
+		if line_number == y:
+			print(line[:x]+"@"+line[x+1:])
+		else:
+			print(line)
+		line_number += 1
+	c = input("hp: {} command?".format(hp))
+	dx= 0
+	dy= 0
+	if c == "quit":
+		break
 	if c == "a":
-		x -= 1
+		dx -= 1
 	if c == "d":
-		x += 1
+		dx += 1
 	if c == "w":
-		y -= 1
+		dy -= 1
 	if c == "s":
-		y += 1
+		dy += 1
+	tile = dungeon.split()[y+dy][x+dx]
+	if tile == "#":
+		print("you run into a wall, ouch!")
+		hp -= 1
+		dx=0
+		dy=0
+	# movement
+	x += dx
+	y += dy
 
-
-
+print("game over")
 
