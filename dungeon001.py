@@ -35,9 +35,13 @@ while hp>0:
 		else:
 			hp += 25
 	if c == "tp" or c == "teleport":
-		dx += 2
-		print("you used teleport")
-		mp -= 25
+		if mp <= 0:
+			print("you have not enough mp")
+			input("press enter")
+		else:
+			dx += 2
+			print("you used teleport")
+			mp -= 25
 	if c == ("a"):
 		hunger+= 1
 	if c == ("d"):
@@ -142,17 +146,20 @@ while hp>0:
 	
 	# hunger 
 		
-	if hunger > 20:
-		print("youre stomache growls! eat something")
-		if hunger > 25:
-			hp -=5
-			print("you really need something to eat!")
-		if hunger > 35:
-			hp -=10
-			print("youre starving")
-		if hunger > 40:
-			hp -=300
+	if hunger > 40:
+			hp = 0
 			print("you died")
+	elif hunger > 35:
+			hp -= 10
+			print("youre starving")
+	elif hunger > 25:
+			hp -= 5
+			print("you really need something to eat!")
+	elif hunger > 20:
+		print("youre stomache growls! eat something")
+	
+		
+		
 			
 		
 		#ground / food / others
