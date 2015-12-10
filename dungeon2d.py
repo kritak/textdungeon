@@ -19,11 +19,17 @@ S    statue"""
 
 dungeon="""
 ###################################################
-#.....S...........................................#
+#...D..#..........................................#
+#......#..........................................#
+#......#..........................................#
+#.l....#..........................................#
+####d###..........................................#
+#....#............................................#
+#....#............................................#
+#....d............................................#
+######............................................#
 #.................................................#
-#.....S...$.......................................#
 #.................................................#
-#.......$.........................................#
 #.................................................#
 #.................................................#
 #.................................................#
@@ -35,12 +41,18 @@ dungeon = dungeon.split()
 
 # hero start posi 1/1
 
-hp=10
+hp=100
+mp=100
+hunger=0
+food=0
+gold=0
+key=0
 x=1
 y=1
 dx=0
 dy=0
-gold=0
+
+
 
 while hp >0:
     
@@ -51,7 +63,7 @@ while hp >0:
         else:
             print(line)
         line_number += 1
-    c = input("hp: {} gold: {} command?".format(hp,gold))
+    c = input("hp: {} mp: {} hunger: {} food: {} gold: {} key: {} command?".format(hp,mp,hunger,food,gold,key))
     dx= 0
     dy= 0
     if c == "quit":
@@ -65,6 +77,34 @@ while hp >0:
     if c == "s":
         dy += 1
     tile = dungeon[y+dy][x+dx]
+    
+    if c == "a":
+        hunger += 1
+    if c == "d":
+        hunger += 1
+    if c == "w":
+        hunger += 1
+    if c == "s":
+        hunger += 1  
+    if c == "e" or c == "eat":
+        if food <= 0:
+            print("you have no food!")
+            input("press enter")
+        else: 
+            food -= 1
+            hunger -= 5   
+    if hunger > 40:
+            hp = 0
+            print("you died")
+    elif hunger > 35:
+            hp -= 10
+            print("youre starving")
+    elif hunger > 25:
+            hp -= 5
+            print("you really need something to eat!")
+    elif hunger > 20:
+        print("youre stomache growls! eat something")
+        
     # check movement
     if tile == "#":
         print("you run into a wall, ouch!")
@@ -101,5 +141,33 @@ while hp >0:
         input("press enter")
         gold += 1
         dungeon[y] = dungeon[y][:x] + "." + dungeon[y][x+1:] # replace gold with .
+    if tile == "k":
+        print("you found a key!")
+        input("press enter")
+        key += 1
+        dungeon[y] = dungeon [y][:x] + "." + dungeon[y][x+1:]
+    if tile == "c":
+        print("you found a chest!")
+        input("press enter")
+        key -= 1
+        gold += 10
+        dungeon[y] = dungeon [y][:x] + "." + dungeon[y][x+1:]
+    if tile == "f":
+        print("you found food")
+        input("press enter")
+        food += 1
+        dungeon[y] = dungeon [y][:x] + "." + dungeon[y][x+1:]
+    if tile == "D":
+        print("a big door find a way to open it")
+        input("press enter")
+        dx=0
+        dy=0
+        dungeon[y] = dungeon [y][:x] + "." + dungeon[y][x+1:]
+    if tile == "l":
+        print("you found a lever which opened the big door")
+        input("press enter")
+        remove("D") # fragen!!!!
+        dungeon[y] = dungeon [y][:x] + "." + dungeon[y][x+1:]
+        
 print("game over")
 
