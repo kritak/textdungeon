@@ -12,6 +12,9 @@ key=0
 mp=100
 healthpot=0
 
+credit="""
+created by Schmuck Andreas"""
+
 helptext="""
 k = key 
 d = door
@@ -38,6 +41,8 @@ while hp>0:
 	dx=0     # delta x gewünschte richtung
 	if c == "h" or c == "help":
 		print(helptext)
+	if c == "c" or c == "credits":
+		print(credit)
 	if c == "a":
 		dx -= 1
 	if c == "d":
