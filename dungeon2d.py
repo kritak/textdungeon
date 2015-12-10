@@ -10,9 +10,9 @@ def cls():
     """clear the screen for windows,mac,linus"""
     os.system('cls' if os.name=='nt' else 'clear')
 
-def remove_tile(x,y,new_tile="."):
+def remove_tile(x,y,z,new_tile="."):
     """replace tiles / items with new tile"""
-    return  dungeon[y][:x] + new_tile + dungeon[y][x+1:]
+    return  dungeon[z][y][:x] + new_tile + dungeon[z][y][x+1:]
     
     
 
@@ -28,19 +28,41 @@ d    door
 k    key
 B    boss
 M    mage
-S    statue"""
+S    statue
+<    stair-up
+>    stair-down"""
 
-dungeon="""
+dungeon1="""
 ###################################################
-#...D..#..........................................#
+#...D..#.........................................>#
 #......#..........................................#
-#...S..#..........................................#
+#...S...........>.................................#
 #.1....#..........................................#
 ####d###..........................................#
 #....#............................................#
-#....#............................................#
-#....d............................................#
-######............................................#
+#....#.............................##.............#
+#....d...........................##.#.............#
+######.........................##...#.............#
+#...................................#.............#
+#...................................#.............#
+#...................................#.............#
+#.................................................#
+#.................................................#
+#.................................................#
+#.................................................#
+###################################################"""
+
+dungeon2="""
+###################################################
+#...D..#.........................................<#
+#......#..........................................#
+#...S..#.................................<........#
+#.1....#..........................................#
+####d###..........................................#
+#....#..........................#####.............#
+#....#..........................#...#.............#
+#....d.............................#..............#
+######............................####............#
 #.................................................#
 #.................................................#
 #.................................................#
@@ -49,7 +71,22 @@ dungeon="""
 #.................................................#
 #.................................................#
 ###################################################"""
-dungeon = dungeon.split()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+dungeon = [dungeon1.split(),dungeon2.split()]
 
 
 # hero start posi 1/1
@@ -57,14 +94,14 @@ dungeon = dungeon.split()
 hp=100
 mp=100
 hunger=0
-food=0
+food=5
 gold=0
 key=0
 x=1
 y=1
 dx=0
 dy=0
-
+z=0
 
 
 while hp >0:
@@ -72,7 +109,7 @@ while hp >0:
     cls()
     print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {}".format(hp,mp,hunger,food,gold,key))
     line_number = 0
-    for line in dungeon:
+    for line in dungeon[z]:
         if line_number == y:
             print(line[:x]+"@"+line[x+1:])
         else:
@@ -95,7 +132,7 @@ while hp >0:
     if c == "s":
         dy += 1
         hunger += 1
-    tile = dungeon[y+dy][x+dx]
+    tile = dungeon[z][y+dy][x+dx]
 
     if c == "e" or c == "eat":
         if food <= 0:
@@ -147,7 +184,7 @@ while hp >0:
             input("press enter")
             # replace statue with "."
             #dungeon[y+dy] = dungeon[y+dy][:x+dx] + "." + dungeon[y+dy][x+dx+1:]
-            dungeon[y+dy] = remove_tile(x+dx,y+dy)
+            dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)
     if tile == "D":
         print("a big door find a way to open it")
         input("press enter")
@@ -157,34 +194,40 @@ while hp >0:
     x += dx
     y += dy
     # hero stays on special tile
-    tile = dungeon[y][x]
+    tile = dungeon[z][y][x]
     if tile == "$":
         print("you found gold!")
         input("press enter")
         gold += 1
-        dungeon[y] = remove_tile(x,y) # replace gold with .
+        dungeon[z][y] = remove_tile(x,y,z) # replace gold with .
     if tile == "k":
         print("you found a key!")
         input("press enter")
         key += 1
-        dungeon[y] = remove_tile(x,y)
+        dungeon[z][y] = remove_tile(x,y,z)
     if tile == "c":
         print("you found a chest!")
         input("press enter")
         key -= 1
         gold += 10
-        dungeon[y] = remove_tile(x,y)
+        dungeon[z][y] = remove_tile(x,y,z)
     if tile == "f":
         print("you found food")
         input("press enter")
         food += 1
-        dungeon[y] = remove_tile(x,y)
+        dungeon[z][y] = remove_tile(x,y,z)
     if tile == "1":
         print("you found a lever which opened the big door")
         input("press enter")
         #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
-        dungeon[1] = remove_tile(4,1) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
-        dungeon[y] = remove_tile(x,y)
+        dungeon[z][1] = remove_tile(4,1,z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
+        dungeon[z][y] = remove_tile(x,y,z)
+    if tile == "<":
+        if c == "" or c == "<":
+            z += 1
+    if tile == ">":
+        if c == "" or c == ">":
+            z -= 1
         
 print("game over")
 
