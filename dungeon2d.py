@@ -15,14 +15,24 @@ import os
 #dungeon = [dungeon1.split(),dungeon2.split(),dungeon3.split(),dungeon4.split()]
 dungeon = [] 
 
+legend = ""
+commands = ""
+
 for root, dirs, files in os.walk('dungeons'):
-	for file in files:
-		if file[0:7] == "dungeon" and file[-4:] == ".txt":
-			mylevel = open(os.path.join("dungeons",file))
-			lines =  mylevel.read().splitlines()
-			dungeon.append(lines)
-			mylevel.close() 
-		
+    for file in files:
+        if file[0:7] == "dungeon" and file[-4:] == ".txt":
+            mylevel = open(os.path.join("dungeons",file))
+            lines =  mylevel.read().splitlines()
+            dungeon.append(lines)
+            mylevel.close() 
+        elif file  == "legend.txt":
+            legendfile = open(os.path.join("dungeons",file))
+            legend = legendfile.read()
+            legendfile.close()
+        elif file == "commands.txt":
+            commandsfile = open(os.path.join("dungeons",file))  
+            commands = commandsfile.read()
+            commandsfile.close()
 
 def cls():
     """clear the screen for windows,mac,linus"""
@@ -44,23 +54,20 @@ def teleport(z):
     if dungeon[z][y][x] != "." :
         x,y = teleport(z)
     return x,y,z
-
-
-legend="""
-.    floor
-#    wall
-@    hero
-f    food
-$    coins
-t    trap
-d    door
-k    key
-B    boss
-M    mage
-S    statue
-<    stair-up
->    stair-down
-tp   teleport"""
+    
+def fight(o1,o2):
+    """fighting between monsters(hero)"""
+    print("{} fights {}".format(zoo[o1][0],zoo[o2][0]))
+    o1_roll = random.randint(1,zoo[o1][1]) # "[1] würfel"
+    o2_roll = random.randint(1,zoo[o2][1])
+    pri_input("{} rolls: {}, {} rolls: {} ".format(zoo[o1][0],
+              o1_roll,zoo[o2][0],o2_roll))
+    if o1_roll == o2_roll:
+        return "reroll"
+    elif o1_roll > o2_roll:
+        return "first win"
+    elif o1_roll < o2_roll:
+        return "second win"
 
 
 
@@ -80,6 +87,15 @@ dx=0
 dy=0
 z=0
 
+#name,würfel,damage,attack
+zoo={"L":["lord",10,40,"magic sword"],
+     "S":["statue",6,20,"stone fist"],
+     "O":["ogre",8,30,"crush"],
+     "M":["mage",4,10,"frostbolt"],
+     "@":["hero",6,30,"sword"],
+     }
+     
+
 
 while hp >0:
     
@@ -97,6 +113,9 @@ while hp >0:
     dy= 0
     if c == "quit":
         break
+    if c == "help" or c == "?":
+        pri_input(legend)
+        pri_input(commands)
     if c == "a":
         dx -= 1
         hunger += 1
@@ -175,86 +194,29 @@ while hp >0:
         dx=0
         dy=0
 
-	# monsters / traps
-	
-    if tile == "S":
-        print("you fight a statue")
-        statue = random.randint(1,6)
-        hero   = random.randint(1,6)
-        if statue > hero:
-            print("statue wins")
-            input("press enter")
-            hp -= 20
+    # monsters / traps
+    
+    if tile in zoo:
+        #print("you fight a statue")
+        #statue = random.randint(1,6)
+        #hero   = random.randint(1,6)
+        #pri_input("hero rolls: {} monster rolls: {} ".format(hero,statue))
+        result = fight("@",tile)
+        if result == "second win":
+            pri_input("{} wins".format(zoo[tile][0]))
+            hp -= random.randint(1,zoo[tile][2])
             dx=0
             dy=0
-        elif statue == hero:
-            print("reroll")
-            input("press enter")
+        elif result == "reroll":
+            pri_input("equal match no damage")
             dx=0
             dy=0
-        else:
-            print("hero wins")
-            input("press enter")
+        elif result == "first win":
+            pri_input("hero wins")
             # replace statue with "."
             #dungeon[y+dy] = dungeon[y+dy][:x+dx] + "." + dungeon[y+dy][x+dx+1:]
             dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)
-    if tile == "M":
-        print("you fight a mage")
-        mage = random.randint(1,6)
-        hero   = random.randint(1,6)
-        if mage > hero:
-            print("mage wins")
-            input("press enter")
-            hp -= 20
-            dx=0
-            dy=0
-        elif mage == hero:
-            print("reroll")
-            input("press enter")
-            dx=0
-            dy=0
-        else:
-            print("hero wins")
-            input("press enter")
-            dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)           
-    if tile == "L":
-        print("you fight a lord")
-        lord = random.randint(1,6)
-        hero   = random.randint(1,6)
-        if lord > hero:
-            print("lord wins")
-            input("press enter")
-            hp -= 40
-            dx=0
-            dy=0
-        elif lord == hero:
-            print("reroll")
-            input("press enter")
-            dx=0
-            dy=0
-        else:
-            print("hero wins")
-            input("press enter")
-            dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)          
-    if tile == "O":
-        print("you fight an ogre")
-        ogre = random.randint(1,6)
-        hero   = random.randint(1,6)
-        if ogre > hero:
-            print("ogre wins")
-            input("press enter")
-            hp -= 10
-            dx=0
-            dy=0
-        elif ogre == hero:
-            print("reroll")
-            input("press enter")
-            dx=0
-            dy=0
-        else:
-            print("hero wins")
-            input("press enter")
-            dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)
+
     if tile == "D":
         print("a big door find a way to open it")
         input("press enter")
