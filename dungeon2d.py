@@ -10,6 +10,7 @@ file name should start with "dungeon"
 
 import random
 import os
+import csv
 
 
 #dungeon = [dungeon1.split(),dungeon2.split(),dungeon3.split(),dungeon4.split()]
@@ -88,14 +89,24 @@ dy=0
 z=0
 
 #name,würfel,damage,attack
-zoo={"L":["lord",10,40,"magic sword"],
-     "S":["statue",6,20,"stone fist"],
-     "O":["ogre",8,30,"crush"],
-     "M":["mage",4,10,"frostbolt"],
-     "@":["hero",6,30,"sword"],
-     }
+#zoo={"L":["lord",10,40,"magic sword"],
+#     "S":["statue",6,20,"stone fist"],
+#     "O":["ogre",8,30,"crush"],
+#     "M":["mage",4,10,"frostbolt"],
+#     "@":["hero",6,30,"sword"],
+#     }
      
+## read zoo from file
+zoo = {}
+with open(os.path.join("dungeons","zoo.csv")) as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"])
+        zoo[row["Symbol"]] = [row["Name"], int(row["Roll"]), int(row["Damage"]), row["Attack"]]
+print(zoo)
+input("import of monster zoo successfull. press enter")
 
+#"Symbol","Name","Roll","Damage","Attack"
 
 while hp >0:
     
