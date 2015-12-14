@@ -1,0 +1,31 @@
+----status----
+
+hp - lifepoints
+mp - manapoints
+hunger - how hungry you are
+food - something to eat
+$ - gold
+
+
+-----legend-----
+
+# - wall
+. - tiles
+$ - gold 
+d - door
+k - key
+c - chest
+f - food
+D - big door
+1-9 - lever
+< - stair up 
+> - stair down
+
+----monster----
+
+S - statue(monster)
+M - mage(monster)
+O - ogre(monster)
+L - lord (endboss)
+
+
