@@ -59,11 +59,16 @@ class Monster():
         self.x=x
         self.y=y
         self.z=z
+        self.symbol= symbol
         self.number=Monster.number
         Monster.number += 1
-        self.hp= 30
-        self.damage= 5
-        self.symbol= symbol
+        self.damage=zoo[self.symbol][2]
+        self.attack_roll=zoo[self.symbol][1]
+        self.name=zoo[self.symbol][0]
+        self.attack1=zoo[self.symbol][3]       
+        self.dx=0
+        self.dy=0
+        self.hp=zoo[self.symbol][4]
 
 
 
@@ -94,10 +99,9 @@ print("welcome in the dungeon you will find this monsters in this game\n")
 with open(os.path.join("dungeons","zoo.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"])
-        zoo[row["Symbol"]] = [row["Name"], int(row["Roll"]), int(row["Damage"]), row["Attack"]]
+        print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"], row["hp"])
+        zoo[row["Symbol"]] = [row["Name"], int(row["Roll"]), int(row["Damage"]), row["Attack"], int(row["hp"])]
 input("\npress enter")
-
 
 
 for root, dirs, files in os.walk('dungeons'):
@@ -266,9 +270,12 @@ while hp >0:
             ##dungeon[y+dy] = dungeon[y+dy][:x+dx] + "." + dungeon[y+dy][x+dx+1:]
             #dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)
             
-    #  monster ?
+    #  monster  battle
     
     for mymonster in monster_list:
+        if mymonster.number == hero.number:
+            # hero himself
+            continue # proceed to next monster in monster_list
         if mymonster.z == hero.z:
             if mymonster.y == hero.y+dy:
                 if mymonster.x == hero.x+dx:
@@ -295,6 +302,7 @@ while hp >0:
     
      
     #  remove monster from monsterlist
+    print(monster_list)
     monster_list = [m for m in monster_list if m.hp > 0]
      
     if tile == "D":
