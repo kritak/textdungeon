@@ -1,6 +1,7 @@
 """
 2D dungeon with python
 by Andreas Schmuck 2015
+course project of http://spielend-programmieren.at
 
 dungeons must be in folder dungeons
 dungeon file must be ".txt" file
@@ -105,10 +106,14 @@ input("\npress enter")
 
 
 for root, dirs, files in os.walk('dungeons'):
-    lz = -1
+    lz = 0
+    filelist = []
     for file in files:
+        filelist.append(file)
+    filelist.sort()
+    for file in filelist:
+        print("processing:", file)
         if file[0:7] == "dungeon" and file[-4:] == ".txt":
-            lz += 1
             mylevel = open(os.path.join("dungeons",file))
             lines =  mylevel.read().splitlines()
             ly = 0
@@ -116,15 +121,16 @@ for root, dirs, files in os.walk('dungeons'):
                 lx = 0
                 for char in line:
                     if char in zoo:
+                        monster_list.append(Monster(lx,ly,lz,char))
                         if char == "@":
-                            hero=Monster(lx,ly,lz,"@")
-                            monster_list.append(hero)
-                        else:
-                            monster_list.append(Monster(lx,ly,lz,char))
+                            hero=monster_list[-1]
+                            #pri_input("hero added")
                         line = line[:lx]+"."+line[lx+1:]
                     lx += 1
+                lines[ly] = line
                 ly+=1
-                        
+            lz += 1            
+            #print(lines)
             dungeon.append(lines)
             mylevel.close() 
         elif file  == "legend.txt":
@@ -145,7 +151,7 @@ pri_input(commands)
 
 while hp >0:
     
-    cls()
+    cls() # paint the dungeon
     print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {}".format(int(hp),mp,hunger,food,gold,key))
     line_number = 0
     for line in dungeon[hero.z]:
@@ -159,31 +165,107 @@ while hp >0:
             if mymonster.z == hero.z:
                 if mymonster.y == line_number:
                     pline = pline[:mymonster.x]+mymonster.symbol+pline[mymonster.x+1:]
+                    #pass
         print(pline)
         line_number += 1
+    # hero stays on special tile?
+    tile = dungeon[hero.z][hero.y][hero.x]
+    if tile == "$":
+        print("you found gold!")
+        #input("press enter")
+        gold += 1
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z) # replace gold with .
+    elif tile == "k":
+        print("you found a key!")
+        #input("press enter")
+        key += 1
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+    elif tile == "c":
+        print("you found a chest!")
+        #input("press enter")
+        key -= 1
+        gold += 10
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+    elif tile == "f":
+        print("you found food!")
+        #input("press enter")
+        food += 1
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+    elif tile == "1":
+        print("you found a lever which opened the big door")
+        #input("press enter")
+        #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
+        dungeon[hero.z][1] = remove_tile(44,1,hero.z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+    elif tile == "2":
+        print("you found a lever which opened the big door in lvl one")
+        #input("press enter")
+        dungeon[0][1] = remove_tile(42,1,0)
+        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+    elif tile =="<":
+        print("you found a stair up (press Enter to climb up)")
+    elif tile ==">":
+        print("you found a stair down (press Enter to climb down)")
+    # -----------food clock -------------------
+    hp += 0.1
+    hp = min(hp,hpmax)
+    if hunger > 40:
+            hp = 0
+            print("you died")
+            break
+            #input("press enter")
+    elif hunger > 35:
+            hp -= 10
+            print("youre starving")
+            #input("press enter")
+    elif hunger > 25:
+            hp -= 5
+            print("you really need something to eat!")
+            #input("press enter")
+    elif hunger > 20:
+        print("youre stomache growls! eat something")
+        #input("press enter")  
+    
+    # ---------- ask for new command ----------
     c = input("command?")
     dx= 0
     dy= 0
+    # -------- movement -----------
+    if tile == "<":
+        if c == "" or c == "<":
+            #pri_input("c was:"+str(c)+"tile is:"+tile)
+            if hero.z == 0:
+                pri_input("you leave the dungeon and return to town")
+                break
+            hero.z -= 1  # climb up
+            hunger += 2
+    elif tile == ">":
+        if c == "" or c == ">":
+            pri_input("c was:"+str(c)+"tile is:"+tile)
+            if hero.z == len(dungeon)-1:
+                pri_input("you already reached the deepest dungeon")
+            else:
+                hero.z += 1    # climb down
+                hunger += 2
+    if c == "a":   
+        dx -= 1                # left
+    elif c == "d":
+        dx += 1                # right
+    elif c == "w":
+        dy -= 1                # up
+    elif c == "s":
+        dy += 1                # down
+    if dx != 0 or dy != 0:
+        hunger+=1
+    #---------------- other commands (non- movement) -------------
     if c == "quit":
         break
-    if c == "help" or c == "?":
+    elif c == "help" or c == "?":
         pri_input(legend)
         pri_input(commands)
-    if c == "a":
-        dx -= 1
-        hunger += 1
-    if c == "d":
-        dx += 1
-        hunger += 1
-    if c == "w":
-        dy -= 1
-        hunger += 1
-    if c == "s":
-        dy += 1
-        hunger += 1
     
-    tile = dungeon[hero.z][hero.y+dy][hero.x+dx]
-    if c == "e" or c == "eat":
+           #tile = dungeon[hero.z][hero.y+dy][hero.x+dx]
+    elif c == "e" or c == "eat":
         if food <= 0:
             print("you have no food!")
             input("press enter") 
@@ -191,59 +273,27 @@ while hp >0:
             food -= 1
             hunger -= 5
             hunger = max(0,hunger) 
-              
-    if c == "t" or c == "teleport":
+    elif c == "t" or c == "teleport":
         hunger += 20
         #x,y = teleport(random.randint(0,3))
         hero.x,hero.y,hero.z = teleport(hero.z)
         
-    if (c == "esc" or c == "escape") and hero.z >0:  
+    elif (c == "esc" or c == "escape") and hero.z >0:  
         hunger += 15
         hp = 1
         hero.x,hero.y,hero.z = teleport(hero.z-1)    
-    
-    if tile == "<":
-        if c == "" or c == "<":
-            if hero.z == 0:
-                pri_input("you leave the dungeon and return to town")
-                break
-            hero.z -= 1         
-    if tile == ">":
-        if c == "" or c == ">":
-            if hero.z == len(dungeon)-1:
-                pri_input("you already reached the deepest dungeon")
-            else:
-                hero.z += 1    
-    
-    
-    
-    
-    #  always
-    hp += 0.1
-    hp = min(hp,hpmax)
-    if hunger > 40:
-            hp = 0
-            print("you died")
-            input("press enter")
-    elif hunger > 35:
-            hp -= 10
-            print("youre starving")
-            input("press enter")
-    elif hunger > 25:
-            hp -= 5
-            print("you really need something to eat!")
-            input("press enter")
-    elif hunger > 20:
-        print("youre stomache growls! eat something")
-        input("press enter")  
-    
-    
-    
-    # check movement
-    if tile == "#":
+
+    # -------- check if movement is possible -------------
+    tile = dungeon[hero.z][hero.y+dy][hero.x+dx]
+    if tile == "#":   # hero runs into wall
         print("you run into a wall, ouch!")
         input("press enter")
         hp -= 1
+        dx=0
+        dy=0
+    if tile == "D":   # hero runs into door
+        print("a big door find a way to open it")
+        input("press enter")
         dx=0
         dy=0
 
@@ -270,7 +320,7 @@ while hp >0:
             ##dungeon[y+dy] = dungeon[y+dy][:x+dx] + "." + dungeon[y+dy][x+dx+1:]
             #dungeon[z][y+dy] = remove_tile(x+dx,y+dy,z)
             
-    #  monster  battle
+    # ----------- monster  battle -----------------
     
     for mymonster in monster_list:
         if mymonster.number == hero.number:
@@ -302,52 +352,15 @@ while hp >0:
     
      
     #  remove monster from monsterlist
-    print(monster_list)
+    # print(monster_list)
     monster_list = [m for m in monster_list if m.hp > 0]
      
-    if tile == "D":
-        print("a big door find a way to open it")
-        input("press enter")
-        dx=0
-        dy=0
+
     
     # movement
     hero.x += dx
     hero.y += dy
-    # hero stays on special tile
-    tile = dungeon[hero.z][hero.y][hero.x]
-    if tile == "$":
-        print("you found gold!")
-        input("press enter")
-        gold += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z) # replace gold with .
-    if tile == "k":
-        print("you found a key!")
-        input("press enter")
-        key += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    if tile == "c":
-        print("you found a chest!")
-        input("press enter")
-        key -= 1
-        gold += 10
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    if tile == "f":
-        print("you found food")
-        input("press enter")
-        food += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    if tile == "1":
-        print("you found a lever which opened the big door")
-        input("press enter")
-        #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
-        dungeon[hero.z][1] = remove_tile(44,1,hero.z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    if tile == "2":
-        print("you found a lever which opened the big door in lvl one")
-        input("press enter")
-        dungeon[0][1] = remove_tile(42,1,0)
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+
 
         
         

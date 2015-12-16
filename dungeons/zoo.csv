@@ -1,6 +1,6 @@
 "Symbol","Name","Roll","Damage","Attack","hp"
 "L","lord",10,40,"magic sword",300
-"S","statue",6,20,"stone fist",400
+"S","statue",6,20,"stone fist",50
 "O","ogre",8,30,"crush",200
 "M","mage",4,10,"frostbolt",100
 "@","hero",6,30,"sword",500
