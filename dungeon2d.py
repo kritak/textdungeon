@@ -241,7 +241,7 @@ while hp >0:
             hunger += 2
     elif tile == ">":
         if c == "" or c == ">":
-            pri_input("c was:"+str(c)+"tile is:"+tile)
+            #pri_input("c was:"+str(c)+"tile is:"+tile)
             if hero.z == len(dungeon)-1:
                 pri_input("you already reached the deepest dungeon")
             else:
