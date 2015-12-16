@@ -94,6 +94,31 @@ class Monster():
         self.dy=0
         self.hp=zoo[self.symbol][4]
         
+    def move(self):
+        pass
+        
+class Statue(Monster):
+    pass
+
+class Hero(Monster):
+    pass
+    
+class Lord(Monster):
+    def move(self):
+        self.dx=random.randint(-1,1)
+        self.dy=random.randint(-1,1)
+        
+class Ogre(Monster):
+    def move(self):
+        self.dx=random.randint(-1,1)
+        self.dy=random.randint(-1,1)
+
+class Mage(Monster):
+    def move(self):
+        self.dx=random.randint(-1,1)
+        self.dy=random.randint(-1,1)
+    
+        
 
 
 
@@ -132,11 +157,19 @@ for root, dirs, files in os.walk('dungeons'):
             for line in lines:
                 lx = 0
                 for char in line:
-                    if char in zoo:
-                        monster_list.append(Monster(lx,ly,lz,char))
+                    if char in zoo:                        
                         if char == "@":
-                            hero=monster_list[-1]
-                            #pri_input("hero added")
+                            hero= Hero(lx,ly,lz,char)
+                            monster_list.append(hero)
+                        elif char == "S":
+                            monster_list.append(Statue(lx,ly,lz,char))
+                        elif char == "L":
+                            monster_list.append(Lord(lx,ly,lz,char))
+                        elif char == "O":
+                            monster_list.append(Ogre(lx,ly,lz,char))
+                        elif char == "M":
+                            monster_list.append(Mage(lx,ly,lz,char))
+                        #monster_list.append(Monster(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
                     lx += 1
                 lines[ly] = line
@@ -298,7 +331,25 @@ while hero.hp >0:
         input("press enter")
         hero.dx=0
         hero.dy=0
-            
+    
+    
+    
+    
+    # ----------- monster movement-----------------
+    
+    for mymonster in monster_list:
+        if mymonster.number == hero.number:
+            continue
+        if mymonster.z == hero.z:
+            mymonster.move()# dx,dy
+            tile = dungeon[mymonster.z][mymonster.y+mymonster.dy][mymonster.x+mymonster.dx]
+            if tile == "#" or tile == "D":
+                mymonster.dx=0
+                mymonster.dy=0
+            else:
+                mymonster.x += mymonster.dx
+                mymonster.y += mymonster.dy
+                
     # ----------- monster  battle -----------------
     
     for mymonster in monster_list:
