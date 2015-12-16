@@ -35,22 +35,45 @@ def teleport(z):
     if dungeon[z][y][x] != "." :
         x,y = teleport(z)
     return x,y,z
-    
-def fight(o1,o2):
-    """fighting between monsters(hero)"""
-    print("{} fights {}".format(zoo[o1][0],zoo[o2][0]))
-    o1_roll = random.randint(1,zoo[o1][1]) # "[1] würfel"
-    o2_roll = random.randint(1,zoo[o2][1])
-    print("{} rolls: {}, {} rolls: {} ".format(zoo[o1][0],
-              o1_roll,zoo[o2][0],o2_roll))
-    if o1_roll == o2_roll:
-        return "reroll"
-    elif o1_roll > o2_roll:
-        return "first win"
-    elif o1_roll < o2_roll:
-        return "second win"
-        
 
+def fight(i1,i2):
+    """fighting between two class instances"""
+    print("{} fights {}".format(i1.name,i2.name))
+    i1_roll = random.randint(1,i1.attack_roll)
+    i2_roll = random.randint(1,i2.attack_roll)       
+    print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
+    if i1_roll == i2_roll:
+        print("its a draw - no damage taken")
+        i1.dx=0
+        i1.dy=0
+        i2.dx=0
+        i2.dy=0
+    elif i1_roll > i2_roll:
+        damage = random.randint(1,i1.damage)
+        i2.hp -= damage
+        print("{} wins this round and makes {} damage".format(i1.name, damage))
+        print("{} has {} hp left".format(i2.name,int(i2.hp)))
+        if i2.hp < 1:
+            print("{} lose, {} wins the fight".format(i2.name,i1.name))
+        else:
+            i1.dx=0
+            i1.dy=0
+            i2.dx=0
+            i2.dy=0
+    else:
+        damage = random.randint(1,i2.damage)
+        i1.hp -= damage
+        print("{} wins this round and makes {} damage".format(i2.name, damage))
+        print("{} has {} hp left".format(i1.name,int(i1.hp)))
+        if i1.hp < 1:
+            print("{} lose, {} wins the fight".format(i1.name,i2.name))
+        else:
+            i1.dx=0
+            i1.dy=0
+            i2.dx=0
+            i2.dy=0
+            
+            
 
 class Monster():
     """generic monster class"""
@@ -70,21 +93,10 @@ class Monster():
         self.dx=0
         self.dy=0
         self.hp=zoo[self.symbol][4]
+        
 
 
 
-hp=500
-hpmax=1000
-mp=100
-hunger=0
-food=50
-gold=0
-key=0
-#x=1
-#y=1
-dx=0
-dy=0
-#z=0
 
 
 dungeon = [] 
@@ -144,15 +156,25 @@ for root, dirs, files in os.walk('dungeons'):
 
 pri_input(commands)
 
-#monster_list=[Monster(46,1,0)]
-     
 
-#"Symbol","Name","Roll","Damage","Attack"
 
-while hp >0:
+
+
+hero.hp=500
+hero.hpmax=1000
+hero.mp=100
+hero.hunger=0
+hero.food=50
+hero.gold=0
+hero.keys=0
+hero.dx=0
+hero.dy=0
+
+
+while hero.hp >0:
     
     cls() # paint the dungeon
-    print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {}".format(int(hp),mp,hunger,food,gold,key))
+    print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {}".format(int(hero.hp),hero.mp,hero.hunger,hero.food,hero.gold,hero.keys))
     line_number = 0
     for line in dungeon[hero.z]:
         pline = line[:]
@@ -166,20 +188,20 @@ while hp >0:
     tile = dungeon[hero.z][hero.y][hero.x]
     if tile == "$":
         print("you found gold!")
-        gold += 1
+        hero.gold += 1
         dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z) # replace gold with .
     elif tile == "k":
         print("you found a key!")
-        key += 1
+        hero.keys += 1
         dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
     elif tile == "c":
         print("you found a chest!")
-        key -= 1
-        gold += 10
+        hero.keys -= 1
+        hero.gold += 10
         dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
     elif tile == "f":
         print("you found food!")
-        food += 1
+        hero.food += 1
         dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
     elif tile == "1":
         print("you found a lever which opened the big door")
@@ -195,25 +217,25 @@ while hp >0:
     elif tile ==">":
         print("you found a stair down (press Enter to climb down)")
     # -----------food clock -------------------
-    hp += 0.1
-    hp = min(hp,hpmax)
-    if hunger > 40:
-            hp = 0
+    hero.hp += 0.1
+    hero.hp = min(hero.hp,hero.hpmax)
+    if hero.hunger > 40:
+            hero.hp = 0
             print("you died")
             break
-    elif hunger > 35:
-            hp -= 10
+    elif hero.hunger > 35:
+            hero.hp -= 10
             print("youre starving")
-    elif hunger > 25:
-            hp -= 5
+    elif hero.hunger > 25:
+            hero.hp -= 5
             print("you really need something to eat!")
-    elif hunger > 20:
+    elif hero.hunger > 20:
         print("youre stomache growls! eat something")  
     
     # ---------- ask for new command ----------
     c = input("command?")
-    dx= 0
-    dy= 0
+    hero.dx= 0
+    hero.dy= 0
     # -------- movement -----------
     if tile == "<":
         if c == "" or c == "<":
@@ -221,24 +243,24 @@ while hp >0:
                 pri_input("you leave the dungeon and return to town")
                 break
             hero.z -= 1  # climb up
-            hunger += 2
+            hero.hunger += 2
     elif tile == ">":
         if c == "" or c == ">":
             if hero.z == len(dungeon)-1:
                 pri_input("you already reached the deepest dungeon")
             else:
                 hero.z += 1    # climb down
-                hunger += 2
+                hero.hunger += 2
     if c == "a":   
-        dx -= 1                # left
+        hero.dx -= 1                # left
     elif c == "d":
-        dx += 1                # right
+        hero.dx += 1                # right
     elif c == "w":
-        dy -= 1                # up
+        hero.dy -= 1                # up
     elif c == "s":
-        dy += 1                # down
-    if dx != 0 or dy != 0:
-        hunger+=1
+        hero.dy += 1                # down
+    if hero.dx != 0 or hero.dy != 0:
+        hero.hunger+=1
     #---------------- other commands (non- movement) -------------
     if c == "quit":
         break
@@ -247,35 +269,35 @@ while hp >0:
         pri_input(commands)
 
     elif c == "e" or c == "eat":
-        if food <= 0:
+        if hero.food <= 0:
             print("you have no food!")
             input("press enter") 
         else: 
-            food -= 1
-            hunger -= 5
-            hunger = max(0,hunger) 
+            hero.food -= 1
+            hero.hunger -= 5
+            hero.hunger = max(0,hero.hunger) 
     elif c == "t" or c == "teleport":
-        hunger += 20
+        hero.hunger += 20
         hero.x,hero.y,hero.z = teleport(hero.z)
         
     elif (c == "esc" or c == "escape") and hero.z >0:  
-        hunger += 15
-        hp = 1
+        hero.hunger += 15
+        hero.hp = 1
         hero.x,hero.y,hero.z = teleport(hero.z-1)    
 
     # -------- check if movement is possible -------------
-    tile = dungeon[hero.z][hero.y+dy][hero.x+dx]
+    tile = dungeon[hero.z][hero.y+hero.dy][hero.x+hero.dx]
     if tile == "#":   # hero runs into wall
         print("you run into a wall, ouch!")
         input("press enter")
-        hp -= 1
-        dx=0
-        dy=0
+        hero.hp -= 1
+        hero.dx=0
+        hero.dy=0
     if tile == "D":   # hero runs into door
         print("a big door find a way to open it")
         input("press enter")
-        dx=0
-        dy=0
+        hero.dx=0
+        hero.dy=0
             
     # ----------- monster  battle -----------------
     
@@ -284,39 +306,19 @@ while hp >0:
             # hero himself
             continue # proceed to next monster in monster_list
         if mymonster.z == hero.z:
-            if mymonster.y == hero.y+dy:
-                if mymonster.x == hero.x+dx:
-                    # fight
-                    result = fight("@",mymonster.symbol)
-                    if result == "second win":
-                        pri_input("{} win this round".format(zoo[mymonster.symbol][0]))
-                        hp -= random.randint(1,zoo[mymonster.symbol][2])
-                        dx=0
-                        dy=0
-                    elif result == "reroll":
-                        pri_input("equal match no damage")
-                        dx=0
-                        dy=0
-                    elif result == "first win":
-                        print("hero win this round")
-                        mymonster.hp -= 10
-                        if mymonster.hp < 1 :
-                            pri_input("monster is dead")
-                        else:
-                            pri_input("monster has still {} hp left".format(mymonster.hp))
-                            dx=0
-                            dy=0
-    
-     
+            if mymonster.y == hero.y+hero.dy:
+                if mymonster.x == hero.x+hero.dx:
+                    fight(hero,mymonster) #fight
+                    input("press enter to continue")
+                    
     #  remove monster from monsterlist
-    # print(monster_list)
     monster_list = [m for m in monster_list if m.hp > 0]
      
 
     
     # movement
-    hero.x += dx
-    hero.y += dy
+    hero.x += hero.dx
+    hero.y += hero.dy
 
 
         
