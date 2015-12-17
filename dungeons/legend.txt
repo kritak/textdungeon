@@ -3,8 +3,6 @@
 hp - lifepoints
 mp - manapoints
 hunger - how hungry you are
-food - something to eat
-$ - gold
 
 
 -----legend-----
@@ -21,11 +19,5 @@ D - big door
 < - stair up 
 > - stair down
 
-----monster----
-
-S - statue(monster)
-M - mage(monster)
-O - ogre(monster)
-L - lord (endboss)
 
 
