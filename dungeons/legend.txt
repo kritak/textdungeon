@@ -18,6 +18,6 @@ D - big door
 1-9 - lever
 < - stair up 
 > - stair down
-
+s - scroll
 
 
