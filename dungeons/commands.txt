@@ -8,3 +8,4 @@ quit - close the game
 e / eat - eat the food
 enter/< - climb stair up
 enter/> - climb stair down
+i - inventory
