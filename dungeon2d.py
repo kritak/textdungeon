@@ -38,6 +38,8 @@ def teleport(z):
 
 def fight(i1,i2):
     """fighting between two class instances"""
+    if i1.hp <1 or i2.hp <1:
+        return
     print("{} fights {}".format(i1.name,i2.name))
     i1_roll = random.randint(1,i1.attack_roll)
     i2_roll = random.randint(1,i2.attack_roll)       
@@ -115,8 +117,8 @@ class Ogre(Monster):
 
 class Mage(Monster):
     def move(self):
-        self.dx=random.randint(-1,1)
-        self.dy=random.randint(-1,1)
+        self.dx=random.randint(-4,4)
+        self.dy=random.randint(-4,4)
     
         
 
@@ -337,18 +339,42 @@ while hero.hp >0:
     
     # ----------- monster movement-----------------
     
+    occupied = []
+    for mymonster in monster_list:
+        if mymonster.z == hero.z:
+            occupied.append((mymonster.x,mymonster.y))
+    
     for mymonster in monster_list:
         if mymonster.number == hero.number:
             continue
         if mymonster.z == hero.z:
-            mymonster.move()# dx,dy
+            mymonster.move()# makes new dx/dy for monster
+            # mage shall not jump out of dungeon
+            width = len(dungeon[hero.z][0])
+            height = len(dungeon[hero.z])
+            if mymonster.x+mymonster.dx < 0 or mymonster.x+mymonster.dx >= width:
+                mymonster.dx = 0
+            if mymonster.y+mymonster.dy < 0 or mymonster.y+mymonster.dy >= height:
+                mymonster.dy = 0    
+                
             tile = dungeon[mymonster.z][mymonster.y+mymonster.dy][mymonster.x+mymonster.dx]
             if tile == "#" or tile == "D":
                 mymonster.dx=0
                 mymonster.dy=0
+            elif mymonster.x+mymonster.dx == hero.x:
+                if mymonster.y+mymonster.dy == hero.y:
+                    fight(mymonster,hero)
+                    input("press enter to continue")
             else:
-                mymonster.x += mymonster.dx
-                mymonster.y += mymonster.dy
+                if (mymonster.x+mymonster.dx,mymonster.y+mymonster.dy) in occupied:
+                    mymonster.dx = 0 
+                    mymonster.dy = 0
+                else:
+                    # clear old position
+                    occupied.remove((mymonster.x,mymonster.y))
+                    mymonster.x += mymonster.dx
+                    mymonster.y += mymonster.dy
+                    occupied.append((mymonster.x,mymonster.y))
                 
     # ----------- monster  battle -----------------
     
