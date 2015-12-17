@@ -75,7 +75,7 @@ def fight(i1,i2):
             i2.dx=0
             i2.dy=0
             
-            
+            #monster
 
 class Monster():
     """generic monster class"""
@@ -120,6 +120,22 @@ class Mage(Monster):
         self.dx=random.randint(-4,4)
         self.dy=random.randint(-4,4)
     
+        #items
+        # class item/monster > code dupliziert "eltern klasse > object"
+        
+class Item():
+    """moveable items in dungeons"""
+    number = 0
+    
+    def __init__(self,x,y,z, symbol):
+        self.x=x
+        self.y=y
+        self.z=z
+        self.symbol= symbol
+        self.number=Item.number
+        Item.number += 1
+        self.name= item_list[symbol][0]
+        self.weight= item_list[symbol][1]
         
 
 
@@ -143,6 +159,17 @@ with open(os.path.join("dungeons","zoo.csv")) as csvfile:
         zoo[row["Symbol"]] = [row["Name"], int(row["Roll"]), int(row["Damage"]), row["Attack"], int(row["hp"])]
 input("\npress enter")
 
+items = {}
+with open(os.path.join("dungeons","items.csv")) as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        print(row["Symbol"], row["Name"], row["Weight"])
+        zoo[row["Symbol"]] = [row["Name"], float(row["Weight"])]
+input("\npress enter")
+        
+        
+        
+
 ## read dungeon from file / legend / help / commands
 for root, dirs, files in os.walk('dungeons'):
     lz = 0
@@ -159,7 +186,15 @@ for root, dirs, files in os.walk('dungeons'):
             for line in lines:
                 lx = 0
                 for char in line:
-                    if char in zoo:                        
+                    if char in zoo:  
+                        
+                        
+                        
+                        
+                        #-------------  items   -----------
+                        
+                        
+                        # ----------  monster   ------------                      
                         if char == "@":
                             hero= Hero(lx,ly,lz,char)
                             monster_list.append(hero)
@@ -213,6 +248,9 @@ while hero.hp >0:
     line_number = 0
     for line in dungeon[hero.z]:
         pline = line[:]
+        # ------ items ------
+        
+        # ------- monster   ------
         for mymonster in monster_list:
             if mymonster.z == hero.z:
                 if mymonster.y == line_number:
@@ -221,6 +259,7 @@ while hero.hp >0:
         line_number += 1
     # hero stays on special tile?
     tile = dungeon[hero.z][hero.y][hero.x]
+    #   items // if item.x == hero.x....
     if tile == "$":
         print("you found gold!")
         hero.gold += 1
