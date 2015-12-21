@@ -23,7 +23,7 @@ def remove_tile(x,y,z,new_tile="."):
     """replace tiles / items with new tile"""
     return  dungeon[z][y][:x] + new_tile + dungeon[z][y][x+1:]
 
-def pri_input(txt):
+def pri_input(txt=""):
     """print and wait for input"""
     print(txt)
     input("press enter")
@@ -75,26 +75,54 @@ def fight(i1,i2):
             i2.dx=0
             i2.dy=0
             
-            #monster
-
-class Monster():
-    """generic monster class"""
-    number=  0
+            
+class Dungeonobject():
+    """positioning for items / monsters"""
+    number = 0
     
-    def __init__(self,x,y,z, symbol):
+    def __init__(self,x,y,z, symbol, carried_by_player=False):
         self.x=x
         self.y=y
         self.z=z
         self.symbol= symbol
-        self.number=Monster.number
-        Monster.number += 1
+        self.weight= 0
+        self.number=Dungeonobject.number
+        self.hero_backpack = carried_by_player
+        Dungeonobject.number += 1
+        if self.symbol in zoo:
+            self.name=zoo[self.symbol][0] 
+        elif self.symbol in items:
+            self.name=items[self.symbol][0]
+        else:
+            pri_input("symbol not found: {}".format(self.symbol))
+            # error!!!
+        self.init2()
+    
+    def init2(self):
+        pass
+    
+            
+            #monster
+
+class Monster(Dungeonobject):
+    """generic monster class"""
+    
+    # Monster soll init von Dungeonobject haben mit extras
+    # def __init__(self, x,y,z, symbol):
+    #     Dungeonobject.__init__(x,y,z,symbol)
+
+    def init2(self):
         self.damage=zoo[self.symbol][2]
         self.attack_roll=zoo[self.symbol][1]
-        self.name=zoo[self.symbol][0]
         self.attack1=zoo[self.symbol][3]       
         self.dx=0
         self.dy=0
         self.hp=zoo[self.symbol][4]
+        self.init3()
+        
+    def init3(self):
+        pass
+    
         
     def move(self):
         pass
@@ -103,7 +131,9 @@ class Statue(Monster):
     pass
 
 class Hero(Monster):
-    pass
+    
+    def init3(self):
+       pass
     
 class Lord(Monster):
     def move(self):
@@ -123,27 +153,20 @@ class Mage(Monster):
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
         
-class Item():
+class Item(Dungeonobject):
     """moveable items in dungeons"""
-    number = 0
+   # def __init__(self,x,y,z, symbol, carried_by_player=False):
+    #    Dungeonobject.__init__(self,x,y,z, symbol, carried_by_player)
     
-    def __init__(self,x,y,z, symbol):
-        self.x=x
-        self.y=y
-        self.z=z
-        self.symbol= symbol
-        self.number=Item.number
-        Item.number += 1
-        self.name= item_list[symbol][0]
-        self.weight= item_list[symbol][1]
-        
-
-
+    def init2(self):
+        self.weight= items[self.symbol][1]
+        self.hero_backpack= False # carried by hero
 
 
 
 dungeon = [] 
 monster_list = []
+item_list = []
 
 legend = ""
 commands = ""
@@ -163,11 +186,9 @@ items = {}
 with open(os.path.join("dungeons","items.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        print(row["Symbol"], row["Name"], row["Weight"])
-        zoo[row["Symbol"]] = [row["Name"], float(row["Weight"])]
+        print(row["Symbol"], row["Name"])
+        items[row["Symbol"]] = [row["Name"], float(row["Weight"])]
 input("\npress enter")
-        
-        
         
 
 ## read dungeon from file / legend / help / commands
@@ -186,14 +207,11 @@ for root, dirs, files in os.walk('dungeons'):
             for line in lines:
                 lx = 0
                 for char in line:
-                    if char in zoo:  
-                        
-                        
-                        
-                        
+                    if char in items:
                         #-------------  items   -----------
-                        
-                        
+                        item_list.append(Item(lx,ly,lz,char))
+                        line = line[:lx]+"."+line[lx+1:]
+                    if char in zoo:                   
                         # ----------  monster   ------------                      
                         if char == "@":
                             hero= Hero(lx,ly,lz,char)
@@ -228,28 +246,39 @@ pri_input(commands)
 
 
 
-
-
 hero.hp=500
 hero.hpmax=1000
 hero.mp=100
 hero.hunger=0
-hero.food=50
+#hero.food=50
+hero.healthpot=0
 hero.gold=0
 hero.keys=0
 hero.dx=0
 hero.dy=0
-
-
+# add 50 food
+for x in range(50):
+    #item_list.append(Dungeonobject(0,0,0,"f",carried_by_player=True))
+    item_list.append(Item(0,0,0,"f",carried_by_player=True))
+    
 while hero.hp >0:
     
-    cls() # paint the dungeon
-    print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {}".format(int(hero.hp),hero.mp,hero.hunger,hero.food,hero.gold,hero.keys))
+    cls() # --------------paint the dungeon------------------
+    print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {} inv: {}".format(
+          int(hero.hp),hero.mp,hero.hunger,
+          len([i for i in item_list if i.hero_backpack and i.name == "food"]),
+          len([i for i in item_list if i.hero_backpack and i.name == "gold"]),
+          len([i for i in item_list if i.hero_backpack and i.name == "key"]),
+          len([i for i in item_list if i.hero_backpack and i.name == "healthpot"]),
+          len([i for i in item_list if i.hero_backpack])))
     line_number = 0
     for line in dungeon[hero.z]:
         pline = line[:]
         # ------ items ------
-        
+        for item in item_list:
+            if item.z == hero.z and not item.hero_backpack:
+                if item.y == line_number:
+                    pline = pline[:item.x]+item.symbol+pline[item.x+1:]
         # ------- monster   ------
         for mymonster in monster_list:
             if mymonster.z == hero.z:
@@ -260,24 +289,16 @@ while hero.hp >0:
     # hero stays on special tile?
     tile = dungeon[hero.z][hero.y][hero.x]
     #   items // if item.x == hero.x....
-    if tile == "$":
-        print("you found gold!")
-        hero.gold += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z) # replace gold with .
-    elif tile == "k":
-        print("you found a key!")
-        hero.keys += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    elif tile == "c":
-        print("you found a chest!")
-        hero.keys -= 1
-        hero.gold += 10
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    elif tile == "f":
-        print("you found food!")
-        hero.food += 1
-        dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
-    elif tile == "1":
+    ####  hero found items?####
+    for item in item_list:
+        if hero.z == item.z and not item.hero_backpack:
+            if hero.y == item.y:
+                if hero.x == item.x:
+                    print("you found {}".format(item.name))
+                    item.hero_backpack = True
+                    
+    
+    if tile == "1":
         print("you found a lever which opened the big door")
         #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
         dungeon[hero.z][1] = remove_tile(44,1,hero.z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
@@ -334,22 +355,50 @@ while hero.hp >0:
     elif c == "s":
         hero.dy += 1                # down
     if hero.dx != 0 or hero.dy != 0:
-        hero.hunger+=1
+        hero.hunger+=0.5
     #---------------- other commands (non- movement) -------------
     if c == "quit":
         break
+        
+        
+        
+    # ------------------inventory----------------------
+    
+    
+    elif c == "i" or c == "inventory":
+        rucksack = {}
+        for item in item_list:
+            if item.hero_backpack:
+                if item.name in rucksack:
+                    rucksack[item.name][0] += 1
+                    rucksack[item.name][1] += item.weight
+                else:
+                    rucksack[item.name] = [1,item.weight]
+               # print(item.name,item.weight)
+        #-----output inventory------
+        print("player inventory:")
+        print("name     amount   weight:")
+        for i in rucksack:
+            print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))        
+        pri_input()
+                
     elif c == "help" or c == "?":
         pri_input(legend)
         pri_input(commands)
 
     elif c == "e" or c == "eat":
         if hero.food <= 0:
-            print("you have no food!")
-            input("press enter") 
+            pri_input("you have no food!")
         else: 
             hero.food -= 1
             hero.hunger -= 5
             hero.hunger = max(0,hero.hunger) 
+    elif c == "p" or c == "healthpot":
+        if hero.healthpot <=0:
+            pri_input("you have no healthpot")
+        else:
+            hero.healtpot -=1
+            hero.hp += 10
     elif c == "t" or c == "teleport":
         hero.hunger += 20
         hero.x,hero.y,hero.z = teleport(hero.z)
@@ -362,16 +411,20 @@ while hero.hp >0:
     # -------- check if movement is possible -------------
     tile = dungeon[hero.z][hero.y+hero.dy][hero.x+hero.dx]
     if tile == "#":   # hero runs into wall
-        print("you run into a wall, ouch!")
-        input("press enter")
+        pri_input("you run into a wall, ouch!")
         hero.hp -= 1
         hero.dx=0
         hero.dy=0
     if tile == "D":   # hero runs into door
-        print("a big door find a way to open it")
-        input("press enter")
+        pri_input("a big door find a way to open it")
         hero.dx=0
         hero.dy=0
+    if tile == "d":
+        pri_input("a small door find a key to open it")
+        hero.dx=0
+        hero.dy=0
+
+        
     
     
     
