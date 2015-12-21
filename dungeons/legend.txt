@@ -19,5 +19,4 @@ D - big door
 < - stair up 
 > - stair down
 s - scroll
-
-
++ - shop
