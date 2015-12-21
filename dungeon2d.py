@@ -264,8 +264,7 @@ for x in range(50):
 while hero.hp >0:
     
     cls() # --------------paint the dungeon------------------
-    print("hp: {} mp: {} hunger: {} food: {} gold: {} key: {} inv: {}".format(
-          int(hero.hp),hero.mp,hero.hunger,
+    print("food: {} gold: {} key: {} healthpot: {} inv: {}".format(
           len([i for i in item_list if i.hero_backpack and i.name == "food"]),
           len([i for i in item_list if i.hero_backpack and i.name == "gold"]),
           len([i for i in item_list if i.hero_backpack and i.name == "key"]),
@@ -295,7 +294,9 @@ while hero.hp >0:
             if hero.y == item.y:
                 if hero.x == item.x:
                     print("you found {}".format(item.name))
-                    item.hero_backpack = True
+                    take = input("do you want to pick up {}?".format(item.name))
+                    if take.lower() == "yes" or take.lower() == "y" or take == "":
+                        item.hero_backpack = True
                     
     
     if tile == "1":
@@ -328,7 +329,8 @@ while hero.hp >0:
         print("youre stomache growls! eat something")  
     
     # ---------- ask for new command ----------
-    c = input("command?")
+    c = input("hp: {} mp: {} hunger: {} \ncommand?".format(int(hero.hp),hero.mp,hero.hunger))
+    
     hero.dx= 0
     hero.dy= 0
     # -------- movement -----------
@@ -381,6 +383,38 @@ while hero.hp >0:
         for i in rucksack:
             print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))        
         pri_input()
+        
+    elif c == "x" or c == "drop":
+        rucksack = {}
+        for item in item_list:
+            if item.hero_backpack:
+                if item.name in rucksack:
+                    rucksack[item.name][0] += 1
+                    rucksack[item.name][1] += item.weight
+                else:
+                    rucksack[item.name] = [1,item.weight]
+        print("player inventory:")
+        print("name     amount   weight:")
+        for i in rucksack:
+            print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))
+        what=input("what do you want to drop?")
+        if what in rucksack:
+            amount = input("how much do you want to drop?")
+            try:
+                amount = int(amount)
+            except:
+                print("wrong amount!")
+                continue
+            for a in range(amount):
+                for item in item_list:
+                    if item.name == what and item.hero_backpack:
+                        item.hero_backpack = False 
+                        item.x,item.y,item.z = hero.x,hero.y,hero.z
+                        print("dropped 1 {}".format(item.name))
+                        break
+            pri_input()
+                        
+                    
                 
     elif c == "help" or c == "?":
         pri_input(legend)
