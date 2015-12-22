@@ -448,10 +448,19 @@ while hero.hp >0:
         pri_input(commands)
 
     elif c == "e" or c == "eat":
-        if hero.food <= 0:
+        
+        #if hero.food <= 0:
+        if  len([i for i in item_list if i.hero_backpack and i.name == "food"]) <= 0:
+            
             pri_input("you have no food!")
         else: 
-            hero.food -= 1
+            #hero.food -= 1
+            n=-1
+            for i in item_list:
+                if i.hero_backpack and i.name == "food":
+                    n= i.number
+                    break
+            item_list = [i for i in item_list if i.number != n]
             hero.hunger -= 5
             hero.hunger = max(0,hero.hunger) 
     elif c == "p" or c == "healthpot":
@@ -539,6 +548,11 @@ while hero.hp >0:
             if mymonster.y == hero.y+hero.dy:
                 if mymonster.x == hero.x+hero.dx:
                     fight(hero,mymonster) #fight
+                    if mymonster.hp <1:
+                        # monster down , drop?
+                        if random.random() <0.25:
+                            item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k"))))
+                            print("the monster dropped something!")
                     input("press enter to continue")
                     
     #  remove monster from monsterlist
