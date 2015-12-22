@@ -80,14 +80,14 @@ class Dungeonobject():
     """positioning for items / monsters"""
     number = 0
     
-    def __init__(self,x,y,z, symbol, carried_by_player=False):
+    def __init__(self,x,y,z, symbol):
         self.x=x
         self.y=y
         self.z=z
         self.symbol= symbol
         self.weight= 0
         self.number=Dungeonobject.number
-        self.hero_backpack = carried_by_player
+        #self.hero_backpack = carried_by_player
         Dungeonobject.number += 1
         if self.symbol in zoo:
             self.name=zoo[self.symbol][0] 
@@ -102,7 +102,17 @@ class Dungeonobject():
         pass
     
             
-            #monster
+class Item(Dungeonobject):
+    """moveable items in dungeons"""
+
+    def __init__(self, x,y,z, symbol, carried_by_player=False):
+        Dungeonobject.__init__(self, x,y,z, symbol)
+        self.hero_backpack= carried_by_player # carried by hero
+    
+    def init2(self):
+        self.weight= items[self.symbol][1]
+        
+
 
 class Monster(Dungeonobject):
     """generic monster class"""
@@ -153,15 +163,6 @@ class Mage(Monster):
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
         
-class Item(Dungeonobject):
-    """moveable items in dungeons"""
-   # def __init__(self,x,y,z, symbol, carried_by_player=False):
-    #    Dungeonobject.__init__(self,x,y,z, symbol, carried_by_player)
-    
-    def init2(self):
-        self.weight= items[self.symbol][1]
-        self.hero_backpack= False # carried by hero
-
 
 
 dungeon = [] 
@@ -252,14 +253,12 @@ hero.mp=100
 hero.hunger=0
 #hero.food=50
 hero.healthpot=0
-hero.gold=0
-hero.keys=0
+
 hero.dx=0
 hero.dy=0
 # add 50 food
-#for x in range(50):
-    #item_list.append(Dungeonobject(0,0,0,"f",carried_by_player=True))
-    #item_list.append(Item(0,0,0,"f",carried_by_player=True))
+for x in range(50):
+    item_list.append(Item(0,0,0,"f",carried_by_player=True)) 
     
 while hero.hp >0:
     
@@ -386,7 +385,7 @@ while hero.hp >0:
     if hero.dx != 0 or hero.dy != 0:
         hero.hunger+=0.5
     #---------------- other commands (non- movement) -------------
-    if c == "quit":
+    if c == "quit" or c == "exit":
         break
         
         
