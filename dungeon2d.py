@@ -257,13 +257,15 @@ hero.keys=0
 hero.dx=0
 hero.dy=0
 # add 50 food
-for x in range(50):
+#for x in range(50):
     #item_list.append(Dungeonobject(0,0,0,"f",carried_by_player=True))
-    item_list.append(Item(0,0,0,"f",carried_by_player=True))
+    #item_list.append(Item(0,0,0,"f",carried_by_player=True))
     
 while hero.hp >0:
     
-    cls() # --------------paint the dungeon------------------
+    #     --------------paint the dungeon------------------
+    
+    cls()
     print("food: {} gold: {} key: {} healthpot: {} inv: {}".format(
           len([i for i in item_list if i.hero_backpack and i.name == "food"]),
           len([i for i in item_list if i.hero_backpack and i.name == "gold"]),
@@ -273,32 +275,48 @@ while hero.hp >0:
     line_number = 0
     for line in dungeon[hero.z]:
         pline = line[:]
-        # ------ items ------
-        for item in item_list:
-            if item.z == hero.z and not item.hero_backpack:
-                if item.y == line_number:
-                    pline = pline[:item.x]+item.symbol+pline[item.x+1:]
-        # ------- monster   ------
-        for mymonster in monster_list:
-            if mymonster.z == hero.z:
-                if mymonster.y == line_number:
-                    pline = pline[:mymonster.x]+mymonster.symbol+pline[mymonster.x+1:]
-        print(pline)
+        myline = ""
+        
+        
+        #       ------ items/monster ------
+ 
+       
+        for x in range(len(pline)):
+            stash = []
+            monster = False
+            mychar = pline[x]
+            for mymonster in monster_list:
+                if mymonster.z == hero.z and mymonster.y == line_number and mymonster.x == x:
+                    monster = True
+                    mychar=mymonster.symbol 
+            if not monster:        
+                for item in item_list:
+                    if not item.hero_backpack and item.z == hero.z and item.y == line_number and item.x == x:
+                        stash.append(item)
+                if len(stash) == 1:
+                    mychar=stash[0].symbol
+                elif len(stash) > 1:
+                    mychar = "?"
+            myline += mychar   
+        print(myline)
         line_number += 1
     # hero stays on special tile?
     tile = dungeon[hero.z][hero.y][hero.x]
     #   items // if item.x == hero.x....
     ####  hero found items?####
+    stash = []
     for item in item_list:
         if hero.z == item.z and not item.hero_backpack:
             if hero.y == item.y:
                 if hero.x == item.x:
-                    print("you found {}".format(item.name))
-                    take = input("do you want to pick up {}?".format(item.name))
-                    if take.lower() == "yes" or take.lower() == "y" or take == "":
-                        item.hero_backpack = True
+                    stash.append(item)
                     
-    
+    if len(stash) > 0:
+        print("you found {} item{}:".format(len(stash),"" if len(stash) == 1 else "s"))
+        for i in stash:
+            print(i.name)
+        print("press enter to pick up all items")
+        
     if tile == "1":
         print("you found a lever which opened the big door")
         #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
@@ -312,6 +330,7 @@ while hero.hp >0:
         print("you found a stair up (press Enter to climb up)")
     elif tile ==">":
         print("you found a stair down (press Enter to climb down)")
+        
     # -----------food clock -------------------
     hero.hp += 0.1
     hero.hp = min(hero.hp,hero.hpmax)
@@ -330,6 +349,14 @@ while hero.hp >0:
     
     # ---------- ask for new command ----------
     c = input("hp: {} mp: {} hunger: {} \ncommand?".format(int(hero.hp),hero.mp,hero.hunger))
+    
+    #-------------items-------------
+    if len(stash) > 0:
+        if c == "":
+            for i in stash:
+                i.hero_backpack = True
+            continue
+    
     
     hero.dx= 0
     hero.dy= 0
