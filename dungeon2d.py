@@ -463,11 +463,18 @@ while hero.hp >0:
             hero.hunger -= 5
             hero.hunger = max(0,hero.hunger) 
     elif c == "p" or c == "healthpot":
-        if hero.healthpot <=0:
+       # if hero.healthpot <=0:
+        if  len([i for i in item_list if i.hero_backpack and i.name == "healthpot"]) <= 0:
             pri_input("you have no healthpot")
         else:
-            hero.healtpot -=1
-            hero.hp += 10
+           # hero.healtpot -=1
+            n=-1
+            for i in item_list:
+                if i.hero_backpack and i.name == "healthpot":
+                    n= i.number
+                    break
+            item_list = [i for i in item_list if i.number != n]          
+            hero.hp += random.randint(5,10)
     elif c == "t" or c == "teleport":
         hero.hunger += 20
         hero.x,hero.y,hero.z = teleport(hero.z)
