@@ -496,9 +496,19 @@ while hero.hp >0:
         hero.dx=0
         hero.dy=0
     if tile == "d":
-        pri_input("a small door find a key to open it")
-        hero.dx=0
-        hero.dy=0
+        #        hero has at least 1 key?
+        if len([i for i in item_list if i.hero_backpack and i.name == "key"]) > 0:
+            n=-1
+            for i in item_list:
+                if i.hero_backpack and i.name == "key":
+                    n= i.number
+                    break
+            item_list = [i for i in item_list if i.number != n]
+            dungeon[hero.z][hero.y+hero.dy] = remove_tile(hero.x+hero.dx,hero.y+hero.dy,hero.z)
+        else:
+            pri_input("a small door find a key to open it")
+            hero.dx=0
+            hero.dy=0
 
         
     
