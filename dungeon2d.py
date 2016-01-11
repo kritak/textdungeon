@@ -41,7 +41,14 @@ def fight(i1,i2):
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
+    # p_feint (int + dex)/100
+    finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
+    if finte < (i1.intelligence+i1.dexterity)/100:
+        # attacker uses feint
+        if finte > (i2.intelligence+i2.dexterity)/100:
+            print("feint successful! (roll x3)")
+            i1_roll *= 3
     i2_roll = random.randint(1,i2.attack_roll)       
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
     if i1_roll == i2_roll:
@@ -51,7 +58,12 @@ def fight(i1,i2):
         i2.dx=0
         i2.dy=0
     elif i1_roll > i2_roll:
+        d = random.random()#  0....1
         damage = random.randint(1,i1.damage)
+        if d < i1.strength/100:
+            if d > i2.strength/100:
+                print("critical damage! (x3)")
+                damage *= 3
         i2.hp -= damage
         print("{} wins this round and makes {} damage".format(i1.name, damage))
         print("{} has {} hp left".format(i2.name,int(i2.hp)))
@@ -63,7 +75,12 @@ def fight(i1,i2):
             i2.dx=0
             i2.dy=0
     else:
+        d = random.random()#  0....1
         damage = random.randint(1,i2.damage)
+        if d < i2.strength/100:
+            if d > i1.strength/100:
+                print("critical damage! (x3)")
+                damage *= 3
         i1.hp -= damage
         print("{} wins this round and makes {} damage".format(i2.name, damage))
         print("{} has {} hp left".format(i1.name,int(i1.hp)))
@@ -128,6 +145,9 @@ class Monster(Dungeonobject):
         self.dx=0
         self.dy=0
         self.hp=zoo[self.symbol][4]
+        self.strength=zoo[self.symbol][5]
+        self.dexterity=zoo[self.symbol][6]
+        self.intelligence=zoo[self.symbol][7]
         self.init3()
         
     def init3(self):
@@ -182,13 +202,21 @@ commands = ""
 
 ## read zoo from file
 zoo = {}
-print("welcome in the dungeon you will find this monsters in this game\n")
+#print("welcome in the dungeon you will find this monsters in this game\n")
 with open(os.path.join("dungeons","zoo.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"], row["hp"])
-        zoo[row["Symbol"]] = [row["Name"], int(row["Roll"]), int(row["Damage"]), row["Attack"], int(row["hp"])]
-input("\npress enter")
+        #print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"], row["hp"])
+        zoo[row["Symbol"]] = [row["Name"],
+                              int(row["Roll"]),
+                              int(row["Damage"]),
+                              row["Attack"],
+                              int(row["hp"]),
+                              int(row["Strength"]),
+                              int(row["Dexterity"]),
+                              int(row["Intelligence"])
+                              ]
+#input("\npress enter")
 
 items = {}
 with open(os.path.join("dungeons","items.csv")) as csvfile:
