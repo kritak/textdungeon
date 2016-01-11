@@ -143,7 +143,9 @@ class Statue(Monster):
 class Hero(Monster):
     
     def init3(self):
-       pass
+        self.history = []
+        self.trophy = {}
+       #pass
     
 class Lord(Monster):
     def move(self):
@@ -159,6 +161,11 @@ class Mage(Monster):
     def move(self):
         self.dx=random.randint(-4,4)
         self.dy=random.randint(-4,4)
+        
+class Ysera(Monster):
+    def move(self):
+        self.dx=random.randint(-0,0)
+        self.dy=random.randint(-0,0)
     
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
@@ -225,6 +232,8 @@ for root, dirs, files in os.walk('dungeons'):
                             monster_list.append(Ogre(lx,ly,lz,char))
                         elif char == "M":
                             monster_list.append(Mage(lx,ly,lz,char))
+                        elif char == "Y":
+                            monster_list.append(Ysera(lx,ly,lz,char))
                         #monster_list.append(Monster(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
                     lx += 1
@@ -259,8 +268,10 @@ hero.dy=0
 # add 50 food
 for x in range(50):
     item_list.append(Item(0,0,0,"f",carried_by_player=True)) 
-    
-while hero.hp >0:
+turns = 0
+victory = False
+while hero.hp >0 and not victory:
+    turns += 1
     
     #     --------------paint the dungeon------------------
     
@@ -566,9 +577,22 @@ while hero.hp >0:
                     fight(hero,mymonster) #fight
                     if mymonster.hp <1:
                         # monster down , drop?
+                        # special drop
+                        if mymonster.__class__.__name__ == "Ysera":
+                            #remove door when dragon slain @level 5
+                            dungeon[4][9] = remove_tile(40,9,4)
+                        if mymonster.__class__.__name__ == "Lord":
+                            print("you have slain the dark lord and completed the quest")
+                            victory = True                            
                         if random.random() <0.25:
                             item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k"))))
                             print("the monster dropped something!")
+                        hero.history.append("turn {}: slain a {}".format(turns,mymonster.__class__.__name__))
+                        m = mymonster.__class__.__name__
+                        if m in hero.trophy:
+                            hero.trophy[m] += 1
+                        else:
+                            hero.trophy[m] = 1
                     input("press enter to continue")
                     
     #  remove monster from monsterlist
@@ -585,3 +609,9 @@ while hero.hp >0:
         
 print("game over")
 
+print("history of hero:")
+input("press enter to continue")
+for m in hero.trophy:
+    print(m,hero.trophy[m])
+for line in hero.history:
+    print(line)
