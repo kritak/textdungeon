@@ -129,7 +129,17 @@ class Item(Dungeonobject):
     def init2(self):
         self.weight= items[self.symbol][1]
         
-
+class Wearable(Item):
+    """wearable items (head ..shoulders..hands...)"""
+    
+    def init2(self):
+        self.weight= items[self.symbol][1] # generic
+        self.slot= random.choice(("head","body","legs","feet","hands","neck"))
+        ### worn item is considered to be also in backpack
+        self.worn= False
+        
+        
+        
 
 class Monster(Dungeonobject):
     """generic monster class"""
@@ -245,7 +255,10 @@ for root, dirs, files in os.walk('dungeons'):
                 for char in line:
                     if char in items:
                         #-------------  items   -----------
-                        item_list.append(Item(lx,ly,lz,char))
+                        if char == "w":
+                            item_list.append(Wearable(lx,ly,lz,char))
+                        else:
+                            item_list.append(Item(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
                     if char in zoo:                   
                         # ----------  monster   ------------                      
@@ -446,8 +459,36 @@ while hero.hp >0 and not victory:
         print("player inventory:")
         print("name     amount   weight:")
         for i in rucksack:
-            print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))        
-        pri_input()
+            print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))  
+        print("-----------------------------\ndetailed list of wearables\n---------------------")
+        for item in item_list:
+            if item.symbol == "w" and item.hero_backpack:
+                print(" {} {} ({})".format(item.number,item.slot, "worn" if item.worn else "backpack"))
+        w = input("enter number of item to wear/remove or press enter to continue")
+        try:
+            w = int(w)
+        except:
+            w = 0
+        if w > 0:
+            slot = False
+            for item in item_list:
+                if item.__class__.__name__ == "Wearable":
+                    if item.number == w and item.hero_backpack:
+                        if item.worn:
+                            item.worn = False
+                        else:
+                            item.worn = True
+                            slot = item.slot
+            if slot:
+                for item in item_list:
+                    if item.__class__.__name__ == "Wearable":
+                        if item.number != w and item.hero_backpack and item.slot == slot:
+                            item.worn = False
+            print("you have changed your equipment!")
+            
+                
+                
+                    
         
     elif c == "x" or c == "drop":
         rucksack = {}
@@ -613,7 +654,7 @@ while hero.hp >0 and not victory:
                             print("you have slain the dark lord and completed the quest")
                             victory = True                            
                         if random.random() <0.25:
-                            item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k"))))
+                            item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k","w"))))
                             print("the monster dropped something!")
                         hero.history.append("turn {}: slain a {}".format(turns,mymonster.__class__.__name__))
                         m = mymonster.__class__.__name__
