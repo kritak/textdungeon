@@ -134,7 +134,45 @@ class Wearable(Item):
     
     def init2(self):
         self.weight= items[self.symbol][1] # generic
-        self.slot= random.choice(("head","body","legs","feet","hands","neck"))
+        self.name= random.choice(list(wearables.keys()))
+        self.slot=wearables[self.name][0]
+        self.armor= wearables[self.name][1]
+        ###------ boni-----
+        if self.armor == 0:
+            p = 1.0
+        else:
+            p = 0.15
+        self.armorbonus = 0
+        self.strengthbonus = 0
+        self.dexteritybonus = 0
+        self.intelligencebonus = 0
+        self.luckbonus = 0
+        self.boni = 0
+        if random.random() < p:            
+            self.armorbonus = random.randint(-1,2)
+            if random.random() < 0.1:
+                self.strengthbonus = random.randint(-1,3)
+            if random.random() < 0.1:
+                self.dexteritybonus = random.randint(-1,3)
+            if random.random() < 0.1:
+                self.intelligencebonus = random.randint(-1,3)
+            if random.random() < 0.1:
+                self.luckbonus = random.randint(-1,3)
+            boni = 0
+            if self.armorbonus != 0:
+                boni += 1
+            if self.strengthbonus != 0:
+                boni += 1
+            if self.dexteritybonus != 0:
+                boni += 1
+            if self.intelligencebonus != 0:
+                boni += 1                
+            if self.luckbonus != 0:
+                boni += 1
+            if boni > 0:
+                self.name= "{} {}".format(entchantment[boni], self.name)
+                self.boni = boni
+               
         ### worn item is considered to be also in backpack
         self.worn= False
         
@@ -209,14 +247,13 @@ item_list = []
 legend = ""
 commands = ""
 
-
+entchantment = {1:"magic",2:"rare",3:"epic",4:"legendary",5:"unique"}
 ## read zoo from file
 zoo = {}
 #print("welcome in the dungeon you will find this monsters in this game\n")
 with open(os.path.join("dungeons","zoo.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        #print(row["Symbol"], row["Name"], row["Roll"], row["Damage"], row["Attack"], row["hp"])
         zoo[row["Symbol"]] = [row["Name"],
                               int(row["Roll"]),
                               int(row["Damage"]),
@@ -227,6 +264,14 @@ with open(os.path.join("dungeons","zoo.csv")) as csvfile:
                               int(row["Intelligence"])
                               ]
 #input("\npress enter")
+##read wearable from file
+wearables = {}
+with open(os.path.join("dungeons","wearables.csv")) as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        wearables[row["Name"]] = [row["Slot"],
+                              int(row["Armor"])
+                              ]
 
 items = {}
 with open(os.path.join("dungeons","items.csv")) as csvfile:
@@ -463,7 +508,9 @@ while hero.hp >0 and not victory:
         print("-----------------------------\ndetailed list of wearables\n---------------------")
         for item in item_list:
             if item.symbol == "w" and item.hero_backpack:
-                print(" {} {} ({})".format(item.number,item.slot, "worn" if item.worn else "backpack"))
+                print(" {} {} ({}) {} {}".format(item.number,item.slot, "worn" if item.worn else "pack",item.name, 
+                      "" if item.boni == 0 else "\n          boni: armor {} str {} dex {} int {} luck {}".format(
+                      item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
         w = input("enter number of item to wear/remove or press enter to continue")
         try:
             w = int(w)
@@ -673,6 +720,8 @@ while hero.hp >0 and not victory:
     hero.x += hero.dx
     hero.y += hero.dy
 
+#### for x in range(20):
+####print("str",random.gauss(10, 2),"int",random.gauss(5, 1))
 
         
         
