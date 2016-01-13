@@ -37,11 +37,11 @@ def teleport(z):
     return x,y,z
 
 def fight(i1,i2):
-    """fighting between two class instances"""
+    """fighting between two class instances i1 is attacking i2"""
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
-    # p_feint (int + dex)/100
+    #---------------- p_feint (int + dex)/100
     finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
     if finte < (i1.intelligence+i1.dexterity)/100:
@@ -49,21 +49,39 @@ def fight(i1,i2):
         if finte > (i2.intelligence+i2.dexterity)/100:
             print("feint successful! (roll x3)")
             i1_roll *= 3
+    #------------------defence roll-----------------------------
     i2_roll = random.randint(1,i2.attack_roll)       
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
-    if i1_roll == i2_roll:
-        print("its a draw - no damage taken")
-        i1.dx=0
-        i1.dy=0
-        i2.dx=0
-        i2.dy=0
-    elif i1_roll > i2_roll:
+    #----- did i1hit i2 ? --------------
+    # --------------------- i1 hit sucessfully -----------------------
+    if i1_roll > i2_roll:
         d = random.random()#  0....1
+        # --- is the defender the hero ----
+        armorbonus = 0
+        armorvalue = 0
+        itemname = ""
+        if i2.__class__.__name__ == "Hero":
+            slot = random.choice(slots)
+            for item in item_list:
+                if item.__class__.__name__ == "Wearable":
+                    if item.slot == slot and item.hero_backpack and item.worn:
+                        armorbonus = item.armorbonus
+                        armorvalue = item.armor
+                        itemname = item.name
+                        break
         damage = random.randint(1,i1.damage)
         if d < i1.strength/100:
             if d > i2.strength/100:
                 print("critical damage! (x3)")
                 damage *= 3
+        # ------------- damage greater armor? ----------
+        if damage > (armorvalue+armorbonus):
+            print("damage is reduced by {} points of {} ".format(armorvalue+armorbonus,itemname))
+            damage -= (armorvalue+armorbonus)
+        else:
+            # ----- armor soaks up damage completely -------
+            print("the damage {} cannot penetrate the armor {} of {}".format(damage,armorvalue+armorbonus,itemname))
+            damage = 0
         i2.hp -= damage
         print("{} wins this round and makes {} damage".format(i1.name, damage))
         print("{} has {} hp left".format(i2.name,int(i2.hp)))
@@ -74,23 +92,19 @@ def fight(i1,i2):
             i1.dy=0
             i2.dx=0
             i2.dy=0
+    # --------------- i1 misses, i2 attacks instead------------
+    elif i1_roll == i2_roll:
+        print("its a draw - no damage taken")
+        i1.dx=0
+        i1.dy=0
+        i2.dx=0
+        i2.dy=0
     else:
-        d = random.random()#  0....1
-        damage = random.randint(1,i2.damage)
-        if d < i2.strength/100:
-            if d > i1.strength/100:
-                print("critical damage! (x3)")
-                damage *= 3
-        i1.hp -= damage
-        print("{} wins this round and makes {} damage".format(i2.name, damage))
-        print("{} has {} hp left".format(i1.name,int(i1.hp)))
-        if i1.hp < 1:
-            print("{} lose, {} wins the fight".format(i1.name,i2.name))
-        else:
-            i1.dx=0
-            i1.dy=0
-            i2.dx=0
-            i2.dy=0
+        print("attack failed.. no damage")
+        i1.dx=0
+        i1.dy=0
+        i2.dx=0
+        i2.dy=0
             
             
 class Dungeonobject():
@@ -248,6 +262,8 @@ legend = ""
 commands = ""
 
 entchantment = {1:"magic",2:"rare",3:"epic",4:"legendary",5:"unique"}
+
+slots = ("head","neck","body","hand","legs","feet")
 ## read zoo from file
 zoo = {}
 #print("welcome in the dungeon you will find this monsters in this game\n")
@@ -508,8 +524,8 @@ while hero.hp >0 and not victory:
         print("-----------------------------\ndetailed list of wearables\n---------------------")
         for item in item_list:
             if item.symbol == "w" and item.hero_backpack:
-                print(" {} {} ({}) {} {}".format(item.number,item.slot, "worn" if item.worn else "pack",item.name, 
-                      "" if item.boni == 0 else "\n          boni: armor {} str {} dex {} int {} luck {}".format(
+                print(" {} {} {} ({}) {} {}".format(item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
+                      "" if item.boni == 0 else "\n                    boni: armor {} str {} dex {} int {} luck {}".format(
                       item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
         w = input("enter number of item to wear/remove or press enter to continue")
         try:
@@ -669,6 +685,7 @@ while hero.hp >0 and not victory:
             elif mymonster.x+mymonster.dx == hero.x:
                 if mymonster.y+mymonster.dy == hero.y:
                     fight(mymonster,hero)
+                    fight(hero,mymonster)
                     input("press enter to continue")
             else:
                 if (mymonster.x+mymonster.dx,mymonster.y+mymonster.dy) in occupied:
@@ -691,6 +708,7 @@ while hero.hp >0 and not victory:
             if mymonster.y == hero.y+hero.dy:
                 if mymonster.x == hero.x+hero.dx:
                     fight(hero,mymonster) #fight
+                    fight(mymonster,hero)
                     if mymonster.hp <1:
                         # monster down , drop?
                         # special drop
