@@ -191,8 +191,71 @@ class Wearable(Item):
         self.worn= False
         
         
-        
+class Meleeweapon(Item):
+    """wearable meleeweapon"""
+    
+    drop = {}
+    price_sum = 0
+    prices = []
 
+###"Weight",Meleerange,"Pierce","Slice","Crush",
+###"Blockchance","Twohand","Specialdamage","Specialprocc",
+###"Price","Dropchance","Drop"
+    
+    def init2(self):
+        # what kind of weapon did we find?
+        r = random.randint(0,Meleeweapon.price_sum)  
+        self.equiped = False
+        for d in Meleeweapon.prices:
+            if d >= r:
+                self.name = Meleeweapon.drop[d]
+                break
+        self.weight = meleeweapon[self.name][0]
+        self.meleerange = meleeweapon[self.name][1]
+        self.pierce = meleeweapon[self.name][2]
+        self.slice = meleeweapon[self.name][3]
+        self.crush = meleeweapon[self.name][4]
+        self.blockchance = meleeweapon[self.name][5]
+        self.twohand = meleeweapon[self.name][6]
+        self.specialdamage = meleeweapon[self.name][7]
+        self.specialprocc = meleeweapon[self.name][8]
+        self.price = meleeweapon[self.name][9]
+        self.entchantmentchance = meleeweapon[self.name][10]
+        # ---------- boni---------------
+        self.strengthbonus = 0
+        self.dexteritybonus = 0
+        self.intelligencebonus = 0
+        self.attackbonus = 0
+        self.defensebonus = 0
+        self.boni = 0
+        if random.random() < self.entchantmentchance:   
+            if random.random() < 0.1:         
+                self.strengthbonus = random.randint(-1,3)
+            if random.random() < 0.1:
+                self.dexteritybonus = random.randint(-1,3)
+            if random.random() < 0.1:
+                self.intelligencebonus = random.randint(-1,3)
+            if random.random() < 0.2:
+                self.attackbonus = random.randint(-1,4)
+            if random.random() < 0.2:
+                self.defensebonus = random.randint(-1,4)
+            boni = 0
+            if self.strengthbonus != 0:
+                boni += 1
+            if self.dexteritybonus != 0:
+                boni += 1
+            if self.intelligencebonus != 0:
+                boni += 1 
+            if self.attackbonus != 0:
+                boni += 1
+            if self.defensebonus != 0:
+                boni += 1
+            if boni > 0:
+                self.name= "{} {}".format(entchantment[boni], self.name)
+                self.boni = boni
+        print("i am a ", self.name)
+        input()        
+        
 class Monster(Dungeonobject):
     """generic monster class"""
     
@@ -201,15 +264,17 @@ class Monster(Dungeonobject):
     #     Dungeonobject.__init__(x,y,z,symbol)
 
     def init2(self):
+        self.free_slots = 2
+        self.sigma=zoo[self.symbol][8]
         self.damage=zoo[self.symbol][2]
         self.attack_roll=zoo[self.symbol][1]
         self.attack1=zoo[self.symbol][3]       
         self.dx=0
         self.dy=0
-        self.hp=zoo[self.symbol][4]
-        self.strength=zoo[self.symbol][5]
-        self.dexterity=zoo[self.symbol][6]
-        self.intelligence=zoo[self.symbol][7]
+        self.hp=int(random.gauss(zoo[self.symbol][4], self.sigma))
+        self.strength=int(random.gauss(zoo[self.symbol][5], self.sigma))
+        self.dexterity=int(random.gauss(zoo[self.symbol][6], self.sigma))
+        self.intelligence=int(random.gauss(zoo[self.symbol][7], self.sigma))
         self.init3()
         
     def init3(self):
@@ -217,27 +282,33 @@ class Monster(Dungeonobject):
     
         
     def move(self):
-        pass
+        self.dx=random.randint(-1,1)
+        self.dy=random.randint(-1,1)
+        
+        
+      #  for x in range(10):
+	#print(int(round(random.gauss(0, 1),0)))
         
 class Statue(Monster):
-    pass
+    def move(self):
+        self.dx = 0
+        self.dy = 0
 
 class Hero(Monster):
     
+    def move(self):
+        pass
+        
     def init3(self):
         self.history = []
         self.trophy = {}
        #pass
     
 class Lord(Monster):
-    def move(self):
-        self.dx=random.randint(-1,1)
-        self.dy=random.randint(-1,1)
+    pass
         
 class Ogre(Monster):
-    def move(self):
-        self.dx=random.randint(-1,1)
-        self.dy=random.randint(-1,1)
+    pass
 
 class Mage(Monster):
     def move(self):
@@ -246,8 +317,8 @@ class Mage(Monster):
         
 class Ysera(Monster):
     def move(self):
-        self.dx=random.randint(-0,0)
-        self.dy=random.randint(-0,0)
+        self.dx = 0
+        self.dy = 0
     
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
@@ -262,11 +333,12 @@ legend = ""
 commands = ""
 
 entchantment = {1:"magic",2:"rare",3:"epic",4:"legendary",5:"unique"}
-
 slots = ("head","neck","body","hand","legs","feet")
-## read zoo from file
 zoo = {}
-#print("welcome in the dungeon you will find this monsters in this game\n")
+wearables = {}
+meleeweapon = {}
+
+## --------------read monster zoo values from file -------------------------------
 with open(os.path.join("dungeons","zoo.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
@@ -277,17 +349,52 @@ with open(os.path.join("dungeons","zoo.csv")) as csvfile:
                               int(row["hp"]),
                               int(row["Strength"]),
                               int(row["Dexterity"]),
-                              int(row["Intelligence"])
+                              int(row["Intelligence"]),
+                              int(row["Sigma"])
                               ]
-#input("\npress enter")
-##read wearable from file
-wearables = {}
+                              
+                              
+## ------------------------read wearable values from file-------------------------------
 with open(os.path.join("dungeons","wearables.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         wearables[row["Name"]] = [row["Slot"],
                               int(row["Armor"])
                               ]
+
+
+## --------------read meleeweapon values from file -------------------------------
+with open(os.path.join("dungeons","meleeweapon.csv")) as csvfile:
+    reader = csv.DictReader(csvfile)
+    for row in reader:
+        meleeweapon[row["Name"]] = [row["Weight"],
+                              float(row["Meleerange"]),
+                              int(row["Pierce"]),
+                              int(row["Slice"]),
+                              int(row["Crush"]),
+                              float(row["Blockchance"]),
+                              int(row["Twohand"]),
+                              row["Specialdamage"],
+                              float(row["Specialprocc"]),
+                              int(row["Price"]),
+                              float(row["Entchantmentchance"])
+                                ]
+max_price=0    # ----find highest price (meleedropchance)
+for mw in meleeweapon:
+    price = meleeweapon[mw][9]
+    if price > max_price:
+        max_price = price
+price_sum=0    # --- calculate relative meleedropchance
+for mw in meleeweapon:
+    price = max_price*1.2-meleeweapon[mw][9]
+    price_sum += price
+    Meleeweapon.drop[price_sum] = mw
+    Meleeweapon.prices.append(price_sum)
+Meleeweapon.price_sum = price_sum
+    
+
+
+
 
 items = {}
 with open(os.path.join("dungeons","items.csv")) as csvfile:
@@ -318,6 +425,8 @@ for root, dirs, files in os.walk('dungeons'):
                         #-------------  items   -----------
                         if char == "w":
                             item_list.append(Wearable(lx,ly,lz,char))
+                        elif char == "m":
+                            item_list.append(Meleeweapon(lx,ly,lz,char))
                         else:
                             item_list.append(Item(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
@@ -524,7 +633,8 @@ while hero.hp >0 and not victory:
         print("-----------------------------\ndetailed list of wearables\n---------------------")
         for item in item_list:
             if item.symbol == "w" and item.hero_backpack:
-                print(" {} {} {} ({}) {} {}".format(item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
+                print(" {} {} {} ({}) {} {}".format(
+                      item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
                       "" if item.boni == 0 else "\n                    boni: armor {} str {} dex {} int {} luck {}".format(
                       item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
         w = input("enter number of item to wear/remove or press enter to continue")
@@ -542,14 +652,48 @@ while hero.hp >0 and not victory:
                         else:
                             item.worn = True
                             slot = item.slot
-            if slot:
+            if slot:   #remove wearable
                 for item in item_list:
                     if item.__class__.__name__ == "Wearable":
                         if item.number != w and item.hero_backpack and item.slot == slot:
                             item.worn = False
             print("you have changed your equipment!")
+            ### weaponscreen####
             
-                
+        print("-----------------------------\ndetailed list of meleeweapon\n---------------------")
+        for item in item_list:
+            if item.symbol == "m" and item.hero_backpack:
+                print(" {} ra:{} ({}) ({}) {} {}".format(
+                      item.number,item.meleerange, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
+                      "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
+                      item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus)))
+        m = input("enter number of item to wield/unwield or press enter to continue")
+        try:
+            m = int(m)
+        except:
+            m = 0
+        if m > 0:
+            for item in item_list:
+                if item.__class__.__name__ == "Meleeweapon":
+                    if item.number == m and item.hero_backpack:
+                        if item.equiped:
+                            item.equiped = False
+                            if item.twohand:
+                                hero.free_slots += 2
+                            else:
+                                hero.free_slots += 1                            
+                        else:
+                            if hero.free_slots < 1:
+                                print("you have no free weaponslot left! please unequip weapon(s) first")
+                            elif hero.free_slots < 2 and item.twohand:
+                                print("remove both weapon(s) first to equip a 2h weapon")
+                            else:
+                                item.equiped = True 
+                                if item.twohand:
+                                    hero.free_slots -= 2
+                                else:
+                                    hero.free_slots -= 1    
+            pri_input()
                 
                     
         
