@@ -41,6 +41,8 @@ def fight(i1,i2):
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
+    #i1.hello(False)
+    #i2.hello(False)
     #---------------- p_feint (int + dex)/100
     finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
@@ -253,8 +255,8 @@ class Meleeweapon(Item):
             if boni > 0:
                 self.name= "{} {}".format(entchantment[boni], self.name)
                 self.boni = boni
-        print("i am a ", self.name)
-        input()        
+        #print("i am a ", self.name)
+        #input()        
         
 class Monster(Dungeonobject):
     """generic monster class"""
@@ -271,10 +273,10 @@ class Monster(Dungeonobject):
         self.attack1=zoo[self.symbol][3]       
         self.dx=0
         self.dy=0
-        self.hp=int(random.gauss(zoo[self.symbol][4], self.sigma))
-        self.strength=int(random.gauss(zoo[self.symbol][5], self.sigma))
-        self.dexterity=int(random.gauss(zoo[self.symbol][6], self.sigma))
-        self.intelligence=int(random.gauss(zoo[self.symbol][7], self.sigma))
+        self.hp=random.gauss(zoo[self.symbol][4], self.sigma)
+        self.strength=random.gauss(zoo[self.symbol][5], self.sigma)
+        self.dexterity=random.gauss(zoo[self.symbol][6], self.sigma)
+        self.intelligence=random.gauss(zoo[self.symbol][7], self.sigma)
         self.init3()
         
     def init3(self):
@@ -285,6 +287,13 @@ class Monster(Dungeonobject):
         self.dx=random.randint(-1,1)
         self.dy=random.randint(-1,1)
         
+    def hello(self, wait = True):
+        print("---------------------------")
+        print("str: {:.1f} dex: {:.1f} int: {:.1f} hp: {:.1f} hallo ich bin ein(e) {}".format(
+               self.strength, self.dexterity, self.intelligence, self.hp,self.__class__.__name__))
+        if wait:
+            pri_input()
+        
         
       #  for x in range(10):
 	#print(int(round(random.gauss(0, 1),0)))
@@ -293,6 +302,7 @@ class Statue(Monster):
     def move(self):
         self.dx = 0
         self.dy = 0
+        
 
 class Hero(Monster):
     
@@ -302,15 +312,15 @@ class Hero(Monster):
     def init3(self):
         self.history = []
         self.trophy = {}
-       #pass
-    
+
 class Lord(Monster):
     pass
-        
+    
 class Ogre(Monster):
     pass
 
 class Mage(Monster):
+    
     def move(self):
         self.dx=random.randint(-4,4)
         self.dy=random.randint(-4,4)
@@ -616,6 +626,7 @@ while hero.hp >0 and not victory:
     
     
     elif c == "i" or c == "inventory":
+        cls()
         rucksack = {}
         for item in item_list:
             if item.hero_backpack:
@@ -630,70 +641,76 @@ while hero.hp >0 and not victory:
         print("name     amount   weight:")
         for i in rucksack:
             print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))  
-        print("-----------------------------\ndetailed list of wearables\n---------------------")
-        for item in item_list:
-            if item.symbol == "w" and item.hero_backpack:
-                print(" {} {} {} ({}) {} {}".format(
-                      item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
-                      "" if item.boni == 0 else "\n                    boni: armor {} str {} dex {} int {} luck {}".format(
-                      item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
-        w = input("enter number of item to wear/remove or press enter to continue")
-        try:
-            w = int(w)
-        except:
-            w = 0
-        if w > 0:
-            slot = False
+        w = 1
+        while w != 0:
+            
+            print("-----------------------------\ndetailed list of wearables\n-----------------------------")
             for item in item_list:
-                if item.__class__.__name__ == "Wearable":
-                    if item.number == w and item.hero_backpack:
-                        if item.worn:
-                            item.worn = False
-                        else:
-                            item.worn = True
-                            slot = item.slot
-            if slot:   #remove wearable
+                if item.symbol == "w" and item.hero_backpack:
+                    print(" {} {} {} ({}) {} {}".format(
+                          item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
+                          "" if item.boni == 0 else "\n                    boni: armor {} str {} dex {} int {} luck {}".format(
+                          item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
+            w = input("enter number of item to wear/remove or press enter to continue")
+            cls()
+            try:
+                w = int(w)
+            except:
+                w = 0
+            if w > 0:
+                slot = False
                 for item in item_list:
                     if item.__class__.__name__ == "Wearable":
-                        if item.number != w and item.hero_backpack and item.slot == slot:
-                            item.worn = False
-            print("you have changed your equipment!")
+                        if item.number == w and item.hero_backpack:
+                            if item.worn:
+                                item.worn = False
+                            else:
+                                item.worn = True
+                                slot = item.slot
+                if slot:   #remove wearable
+                    for item in item_list:
+                        if item.__class__.__name__ == "Wearable":
+                            if item.number != w and item.hero_backpack and item.slot == slot:
+                                item.worn = False
+                print("you have changed your equipment!")
             ### weaponscreen####
-            
-        print("-----------------------------\ndetailed list of meleeweapon\n---------------------")
-        for item in item_list:
-            if item.symbol == "m" and item.hero_backpack:
-                print(" {} ra:{} ({}) ({}) {} {}".format(
-                      item.number,item.meleerange, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
-                      "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
-                      item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus)))
-        m = input("enter number of item to wield/unwield or press enter to continue")
-        try:
-            m = int(m)
-        except:
-            m = 0
-        if m > 0:
+        m = 1
+        while m != 0:
+                
+            print("-----------------------------\ndetailed list of meleeweapon\n-----------------------------")
             for item in item_list:
-                if item.__class__.__name__ == "Meleeweapon":
-                    if item.number == m and item.hero_backpack:
-                        if item.equiped:
-                            item.equiped = False
-                            if item.twohand:
-                                hero.free_slots += 2
-                            else:
-                                hero.free_slots += 1                            
-                        else:
-                            if hero.free_slots < 1:
-                                print("you have no free weaponslot left! please unequip weapon(s) first")
-                            elif hero.free_slots < 2 and item.twohand:
-                                print("remove both weapon(s) first to equip a 2h weapon")
-                            else:
-                                item.equiped = True 
+                if item.symbol == "m" and item.hero_backpack:
+                    print(" {} ra:{} ({}) ({}) {} {}".format(
+                          item.number,item.meleerange, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
+                          "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
+                          item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus)))
+            m = input("enter number of item to wield/unwield or press enter to continue")
+            cls()
+            try:
+                m = int(m)
+            except:
+                m = 0
+            if m > 0:
+                for item in item_list:
+                    if item.__class__.__name__ == "Meleeweapon":
+                        if item.number == m and item.hero_backpack:
+                            if item.equiped:
+                                item.equiped = False
                                 if item.twohand:
-                                    hero.free_slots -= 2
+                                    hero.free_slots += 2
                                 else:
-                                    hero.free_slots -= 1    
-            pri_input()
+                                    hero.free_slots += 1                            
+                            else:
+                                if hero.free_slots < 1:
+                                    print("you have no free weaponslot left! please unequip weapon(s) first")
+                                elif hero.free_slots < 2 and item.twohand:
+                                    print("remove both weapon(s) first to equip a 2h weapon")
+                                else:
+                                    item.equiped = True 
+                                    if item.twohand:
+                                        hero.free_slots -= 2
+                                    else:
+                                        hero.free_slots -= 1    
                 
                     
         
@@ -769,7 +786,16 @@ while hero.hp >0 and not victory:
     elif (c == "esc" or c == "escape") and hero.z >0:  
         hero.hunger += 15
         hero.hp = 1
-        hero.x,hero.y,hero.z = teleport(hero.z-1)    
+        hero.x,hero.y,hero.z = teleport(hero.z-1)   
+        
+    elif c == "c" or c == "check" or c == "sniff":
+        # check stats of monsters nearby
+        for dy in [-1,0,1]:
+            for dx in [-1,0,1]:
+                for mymonster in monster_list:
+                    if mymonster.z == hero.z and mymonster.x == hero.x+dx and mymonster.y == hero.y+dy:
+                        mymonster.hello(wait = False)
+        pri_input()
 
     # -------- check if movement is possible -------------
     tile = dungeon[hero.z][hero.y+hero.dy][hero.x+hero.dx]
