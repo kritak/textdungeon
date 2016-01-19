@@ -148,24 +148,36 @@ class Item(Dungeonobject):
 class Wearable(Item):
     """wearable items (head ..shoulders..hands...)"""
     
+    drop = {}
+    price_sum = 0
+    prices = []
+    
     def init2(self):
-        self.weight= items[self.symbol][1] # generic
-        self.name= random.choice(list(wearables.keys()))
+        # what kind of wearables did we find?
+        r = random.randint(0,Wearable.price_sum)  
+        self.equiped = False
+        for d in Wearable.prices:
+            if d >= r:
+                self.name = Wearable.drop[d]
+                break
+        
+        self.weight = wearables[self.name][8]
+        self.price = wearables[self.name][1]
+        self.entchantmentchance = wearables[self.name][2]
+        self.quality = wearables[self.name][3]
+        self.wear_tear_chance = wearables[self.name][4]
+        self.prot_pierce = wearables[self.name][5]
+        self.prot_slice = wearables[self.name][6]
+        self.prot_crush = wearables[self.name][7]
         self.slot=wearables[self.name][0]
-        self.armor= wearables[self.name][1]
+        
         ###------ boni-----
-        if self.armor == 0:
-            p = 1.0
-        else:
-            p = 0.15
-        self.armorbonus = 0
         self.strengthbonus = 0
         self.dexteritybonus = 0
         self.intelligencebonus = 0
         self.luckbonus = 0
         self.boni = 0
-        if random.random() < p:            
-            self.armorbonus = random.randint(-1,2)
+        if random.random() < self.entchantmentchance:            
             if random.random() < 0.1:
                 self.strengthbonus = random.randint(-1,3)
             if random.random() < 0.1:
@@ -175,8 +187,6 @@ class Wearable(Item):
             if random.random() < 0.1:
                 self.luckbonus = random.randint(-1,3)
             boni = 0
-            if self.armorbonus != 0:
-                boni += 1
             if self.strengthbonus != 0:
                 boni += 1
             if self.dexteritybonus != 0:
@@ -223,6 +233,13 @@ class Meleeweapon(Item):
         self.specialprocc = meleeweapon[self.name][8]
         self.price = meleeweapon[self.name][9]
         self.entchantmentchance = meleeweapon[self.name][10]
+        self.quality = meleeweapon[self.name][11]
+        self.wear_tear_chance = meleeweapon[self.name][12]
+        self.destroy_chance = meleeweapon[self.name][13]
+        self.min_str = meleeweapon[self.name][14]
+        self.min_dex = meleeweapon[self.name][15]
+        self.min_int = meleeweapon[self.name][16]
+        
         # ---------- boni---------------
         self.strengthbonus = 0
         self.dexteritybonus = 0
@@ -333,6 +350,15 @@ class Ysera(Monster):
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
         
+class Rect():
+    """dungeon creator// a rectangle on the map used to charecterize a room"""
+    def __init__(self, x, y, w, h):
+        self.x1 = x
+        self.y1 = y
+        self.x2 = x + w
+        self.y2 = y + h
+        
+    
 
 
 dungeon = [] 
@@ -369,15 +395,37 @@ with open(os.path.join("dungeons","wearables.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
         wearables[row["Name"]] = [row["Slot"],
-                              int(row["Armor"])
+                              int(row["Price"]),
+                              float(row["Entchantmentchance"]),
+                              float(row["Quality"]),
+                              float(row["Wear_Tear_Chance"]),
+                              int(row["Prot_Pierce"]),
+                              int(row["Prot_Slice"]),
+                              int(row["Prot_Crush"]),
+                              float(row["Weight"])
                               ]
+
+max_price=0    # ----find highest price (wearables dropchance)
+for w in wearables:
+    price = wearables[w][1]
+    if price > max_price:
+        max_price = price
+price_sum=0    # --- calculate relative wearables dropchance
+for w in wearables:
+    price = max_price*1.2-wearables[w][1]
+    price_sum += price
+    Wearable.drop[price_sum] = w
+    Wearable.prices.append(price_sum)
+Wearable.price_sum = price_sum
+
 
 
 ## --------------read meleeweapon values from file -------------------------------
 with open(os.path.join("dungeons","meleeweapon.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        meleeweapon[row["Name"]] = [row["Weight"],
+        meleeweapon[row["Name"]] = [
+                              float(row["Weight"]),
                               float(row["Meleerange"]),
                               int(row["Pierce"]),
                               int(row["Slice"]),
@@ -387,7 +435,13 @@ with open(os.path.join("dungeons","meleeweapon.csv")) as csvfile:
                               row["Specialdamage"],
                               float(row["Specialprocc"]),
                               int(row["Price"]),
-                              float(row["Entchantmentchance"])
+                              float(row["Entchantmentchance"]),
+                              float(row["Quality"]),
+                              float(row["Wear_Tear_Chance"]),
+                              float(row["Destroy_Chance"]),
+                              int(row["min_str"]),
+                              int(row["min_dex"]),
+                              int(row["min_int"])
                                 ]
 max_price=0    # ----find highest price (meleedropchance)
 for mw in meleeweapon:
@@ -638,19 +692,19 @@ while hero.hp >0 and not victory:
                # print(item.name,item.weight)
         #-----output inventory------
         print("player inventory:")
-        print("name     amount   weight:")
+        print("amount weight   name:")
         for i in rucksack:
-            print(" {}    {}    {}".format(i,rucksack[i][0],rucksack[i][1]))  
+            print(" {:3.0f}   {:5.1f}     {}".format(rucksack[i][0],rucksack[i][1],i))  
         w = 1
         while w != 0:
             
             print("-----------------------------\ndetailed list of wearables\n-----------------------------")
             for item in item_list:
                 if item.symbol == "w" and item.hero_backpack:
-                    print(" {} {} {} ({}) {} {}".format(
-                          item.number,item.slot,item.armor, "worn" if item.worn else "pack",item.name, 
-                          "" if item.boni == 0 else "\n                    boni: armor {} str {} dex {} int {} luck {}".format(
-                          item.armorbonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
+                    print(" {} {} q: {:3.1f}% ({}) {} {}".format(
+                          item.number,item.slot, item.quality*100,"worn" if item.worn else "pack",item.name, 
+                          "" if item.boni == 0 else "\n                    boni: str {} dex {} int {} luck {}".format(
+                          item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
             w = input("enter number of item to wear/remove or press enter to continue")
             cls()
             try:
@@ -680,10 +734,13 @@ while hero.hp >0 and not victory:
             print("-----------------------------\ndetailed list of meleeweapon\n-----------------------------")
             for item in item_list:
                 if item.symbol == "m" and item.hero_backpack:
-                    print(" {} ra:{} ({}) ({}) {} {}".format(
-                          item.number,item.meleerange, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
+                    print(" {} ra: {} q: {:3.1f}% ({}) ({}) {} {} {}".format(
+                          item.number,item.meleerange, item.quality*100, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
                           "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
-                          item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus)))
+                          item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus),
+                          "" if hero.strength >= item.min_str and hero.dexterity >= item.min_dex and hero.intelligence >= item.min_int else
+                          "\n                    malus: (hero not qualified) min_str {} str {} min_dex {} dex {} min_int {} int {}".format(
+                           item.min_str, hero.strength,item.min_dex,hero.dexterity,item.min_int,hero.intelligence)))
             m = input("enter number of item to wield/unwield or press enter to continue")
             cls()
             try:
