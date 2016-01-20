@@ -278,11 +278,25 @@ class Meleeweapon(Item):
 class Monster(Dungeonobject):
     """generic monster class"""
     
+    drop = {}
+    price_sum = 0
+    prices = []
+    
     # Monster soll init von Dungeonobject haben mit extras
     # def __init__(self, x,y,z, symbol):
     #     Dungeonobject.__init__(x,y,z,symbol)
 
+    @staticmethod
+    def destiny():
+        r = random.randint(0,Monster.price_sum)  
+        for m in Monster.prices:
+            if m >= r:
+                return Monster.drop[m]
+                #break
+
     def init2(self):
+
+        
         self.free_slots = 2
         self.sigma=zoo[self.symbol][8]
         self.damage=zoo[self.symbol][2]
@@ -386,8 +400,27 @@ with open(os.path.join("dungeons","zoo.csv")) as csvfile:
                               int(row["Strength"]),
                               int(row["Dexterity"]),
                               int(row["Intelligence"]),
-                              int(row["Sigma"])
+                              int(row["Sigma"]),
+                              int(row["Price"])
                               ]
+                              
+max_price=0    # ----find highest price (wearables dropchance)
+for z in zoo:
+    if z == "@" or z == "R":
+        continue
+    price = zoo[z][9]
+    if price > max_price:
+        max_price = price
+price_sum=0    # --- calculate relative wearables dropchance
+for z in zoo:
+    if z == "@" or z == "R":
+        continue
+    price = max_price*1.2-zoo[z][9]
+    price_sum += price
+    Monster.drop[price_sum] = z
+    Monster.prices.append(price_sum)
+Monster.price_sum = price_sum
+Monster.prices.sort()
                               
                               
 ## ------------------------read wearable values from file-------------------------------
@@ -417,6 +450,7 @@ for w in wearables:
     Wearable.drop[price_sum] = w
     Wearable.prices.append(price_sum)
 Wearable.price_sum = price_sum
+Wearable.prices.sort()
 
 
 
@@ -455,7 +489,7 @@ for mw in meleeweapon:
     Meleeweapon.drop[price_sum] = mw
     Meleeweapon.prices.append(price_sum)
 Meleeweapon.price_sum = price_sum
-    
+Meleeweapon.prices.sort()    
 
 
 
@@ -509,6 +543,19 @@ for root, dirs, files in os.walk('dungeons'):
                             monster_list.append(Mage(lx,ly,lz,char))
                         elif char == "Y":
                             monster_list.append(Ysera(lx,ly,lz,char))
+                        elif char == "R":
+                            # was für ein monster?
+                            name = Monster.destiny()
+                            if name == "L":
+                                monster_list.append(Lord(lx,ly,lz,"L"))
+                            elif name == "S":
+                                monster_list.append(Statue(lx,ly,lz,"S"))
+                            elif name == "O":
+                                monster_list.append(Ogre(lx,ly,lz,"O"))
+                            elif name == "M":
+                                monster_list.append(Mage(lx,ly,lz,"M"))
+                            elif name == "Y":
+                                monster_list.append(Ysera(lx,ly,lz,"Y")) 
                         #monster_list.append(Monster(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
                     lx += 1
