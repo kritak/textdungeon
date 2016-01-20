@@ -137,6 +137,18 @@ class Dungeonobject():
             
 class Item(Dungeonobject):
     """moveable items in dungeons"""
+    
+    drop = {}
+    price_sum = 0
+    prices = []
+    
+    @staticmethod
+    def destiny():
+        r = random.randint(0,Item.price_sum)  
+        for p in Item.prices:
+            if p >= r:
+                return Item.drop[p]
+                #break
 
     def __init__(self, x,y,z, symbol, carried_by_player=False):
         Dungeonobject.__init__(self, x,y,z, symbol)
@@ -498,9 +510,23 @@ items = {}
 with open(os.path.join("dungeons","items.csv")) as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
-        print(row["Symbol"], row["Name"])
-        items[row["Symbol"]] = [row["Name"], float(row["Weight"])]
-input("\npress enter")
+        #print(row["Symbol"], row["Name"])
+        items[row["Symbol"]] = [row["Name"], float(row["Weight"]), int(row["Price"])]
+        
+max_price=0    # ----find highest price (random item dropchance)
+for i in items:
+    price = items[i][2]
+    if price > max_price:
+        max_price = price
+price_sum=0    # --- calculate relative random item dropchance
+for i in items:
+    price = max_price*1.2-items[i][2]
+    price_sum += price
+    Item.drop[price_sum] = i
+    Item.prices.append(price_sum)
+Item.price_sum = price_sum
+Item.prices.sort()
+
         
 
 ## read dungeon from file / legend / help / commands
@@ -519,6 +545,11 @@ for root, dirs, files in os.walk('dungeons'):
             for line in lines:
                 lx = 0
                 for char in line:
+                    if char == "r":
+                            #random item
+                            char = Item.destiny()
+                    if char == "R":
+                            char = Monster.destiny()
                     if char in items:
                         #-------------  items   -----------
                         if char == "w":
@@ -543,20 +574,6 @@ for root, dirs, files in os.walk('dungeons'):
                             monster_list.append(Mage(lx,ly,lz,char))
                         elif char == "Y":
                             monster_list.append(Ysera(lx,ly,lz,char))
-                        elif char == "R":
-                            # was für ein monster?
-                            name = Monster.destiny()
-                            if name == "L":
-                                monster_list.append(Lord(lx,ly,lz,"L"))
-                            elif name == "S":
-                                monster_list.append(Statue(lx,ly,lz,"S"))
-                            elif name == "O":
-                                monster_list.append(Ogre(lx,ly,lz,"O"))
-                            elif name == "M":
-                                monster_list.append(Mage(lx,ly,lz,"M"))
-                            elif name == "Y":
-                                monster_list.append(Ysera(lx,ly,lz,"Y")) 
-                        #monster_list.append(Monster(lx,ly,lz,char))
                         line = line[:lx]+"."+line[lx+1:]
                     lx += 1
                 lines[ly] = line
@@ -680,7 +697,7 @@ while hero.hp >0 and not victory:
         print("youre stomache growls! eat something")  
     
     # ---------- ask for new command ----------
-    c = input("hp: {} mp: {} hunger: {} \ncommand?".format(int(hero.hp),hero.mp,hero.hunger))
+    c = input("hp: {} mp: {} hunger: {} \ntype help or enter command:".format(int(hero.hp),hero.mp,hero.hunger))
     
     #-------------items-------------
     if len(stash) > 0:
