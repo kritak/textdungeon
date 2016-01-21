@@ -1,0 +1,28 @@
+class Monster():
+	@staticmethod
+	def name ():
+		return random.choice(("hugo","seppi","jogl"))
+	def __init__(self):
+		print("hallo ich bin ein monster names {}".format(Monster.name()
+
+
+
+
+STATICMETHOD > wenn die funktion nichts mit der klasse zu tun hat KEIN self!!
+
+CLASSMETHOD > statt SELF >>> CLS // bezieht sich auf ganze klasse benötigt keine eigene instanz (anzahl der monster zb)
+
+
+
+
+
+PYTHON EXE !!!!!!!!!!!!!!!!!!1
+
+cd Dektop 
+cd textdungeon-master
+
+C:\Python34\python setup.py py2exe
+
+
+
+!!!!!!!WENN NEUES CSV FILE DANN IN SETUP.PY EINTRAGEN!!!!!!!
