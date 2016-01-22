@@ -66,7 +66,7 @@ def fight(i1,i2):
             slot = random.choice(Game.slots)
             for item in Game.item_list:
                 if item.__class__.__name__ == "Wearable":
-                    if item.slot == slot and item.hero_backpack and item.worn:
+                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
                         #armorbonus = item.armorbonus
                         #armorvalue = item.armor
                         itemname = item.name
@@ -111,16 +111,19 @@ def fight(i1,i2):
             
 class Dungeonobject():
     """positioning for items / monsters"""
-    number = 1
+    number = 1 #important to start with 1 because 0 == false
     
     def __init__(self,x,y,z, symbol):
         self.x=x
         self.y=y
         self.z=z
+        self.dx=0
+        self.dy=0
         self.symbol= symbol
         self.weight= 0
         self.number=Dungeonobject.number
         Dungeonobject.number += 1
+        self.carried_by = 0
         if self.symbol in Game.zoo:
             self.name=Game.zoo[self.symbol][0] 
         elif self.symbol in Game.items:
@@ -151,7 +154,7 @@ class Item(Dungeonobject):
 
     def __init__(self, x,y,z, symbol, carried_by=False):
         Dungeonobject.__init__(self, x,y,z, symbol)
-        self.hero_backpack= carried_by # carried by hero
+       # self.hero_backpack= carried_by # carried by hero
         self.carried_by= carried_by
     
     def init2(self):
@@ -164,15 +167,29 @@ class Wearable(Item):
     price_sum = 0
     prices = []
     
-    def init2(self):
+    
+    def __init__(self, x,y,z, symbol, carried_by=False, slot="?"):
+        Dungeonobject.__init__(self, x,y,z, symbol)
+       # self.hero_backpack= carried_by # carried by hero
+        self.carried_by= carried_by
+        self.slot = slot
+    
+    #def init2(self):
         # what kind of wearables did we find?
-        r = random.randint(0,Wearable.price_sum)  
-        self.equiped = False
-        for d in Wearable.prices:
-            if d >= r:
-                self.name = Wearable.drop[d]
-                break
+        while True:
+             r = random.randint(0,Wearable.price_sum)  
+             for d in Wearable.prices:
+                 if d >= r:
+                      self.name = Wearable.drop[d]
+                      break
+             # we have a random wearable
+             # check for correct slot
+             if self.slot == "?":
+                 break # take this wearable
+             if self.slot == Game.wearables[self.name][0]:
+                 break # correct slot, continue
         
+        self.equiped = False
         self.weight = Game.wearables[self.name][8]
         self.price = Game.wearables[self.name][1]
         self.entchantmentchance = Game.wearables[self.name][2]
@@ -327,8 +344,16 @@ class Monster(Dungeonobject):
     
     def equip(self):
         if self.equip_chance > 0:
-            pass
-            
+            i = Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = "body"))
+            # i.worn = True    
+            for slot in Game.slots:
+                if slot == "body":
+                    continue
+                if random.random() < 0.05:
+                    Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = slot))
+            #weapon
+            Game.item_list.append(Meleeweapon(self.x,self.y,self.z,"m", carried_by = self.number))
+            self.hello()
         
         
     def move(self):
@@ -339,6 +364,10 @@ class Monster(Dungeonobject):
         print("---------------------------")
         print("str: {:.1f} dex: {:.1f} int: {:.1f} hp: {:.1f} hallo ich bin ein(e) {}".format(
                self.strength, self.dexterity, self.intelligence, self.hp,self.__class__.__name__))
+        print("my equipment:")
+        for i in Game.item_list:
+            if i.carried_by == self.number :
+                print(i.name)
         if wait:
             pri_input()
         
@@ -364,6 +393,12 @@ class Hero(Monster):
         self.trophy = {}
         self.equip_chance=Game.zoo[self.symbol][10]
         self.equip()
+        self.hp=500
+        self.hpmax=1000
+        self.mp=100
+        self.hunger=0
+        self.healthpot=0
+
         
 class Lord(Monster):
     
@@ -412,7 +447,7 @@ class Game():
     dungeon = [] 
     monster_list = []
     item_list = []
-
+    #hero = None
     legend = ""
     commands = ""
 
@@ -590,8 +625,8 @@ def main():
                         if char in Game.zoo:                   
                             # ----------  monster   ------------                      
                             if char == "@":
-                                hero= Hero(lx,ly,lz,char)
-                                Game.monster_list.append(hero)
+                                Game.hero= Hero(lx,ly,lz,char)
+                                Game.monster_list.append(Game.hero)
                             elif char == "S":
                                 Game.monster_list.append(Statue(lx,ly,lz,char))
                             elif char == "L":
@@ -625,34 +660,26 @@ def main():
 
 
 
-    hero.hp=500
-    hero.hpmax=1000
-    hero.mp=100
-    hero.hunger=0
-    #hero.food=50
-    hero.healthpot=0
 
-    hero.dx=0
-    hero.dy=0
     # add 50 food
     for x in range(50):
-        Game.item_list.append(Item(0,0,0,"f",carried_by=True)) 
+        Game.item_list.append(Item(0,0,0,"f",carried_by=Game.hero.number)) 
     turns = 0
     victory = False
-    while hero.hp >0 and not victory:
+    while Game.hero.hp >0 and not victory:
         turns += 1
         
         #     --------------paint the dungeon------------------
         
         cls()
         print("food: {} gold: {} key: {} healthpot: {} inv: {}".format(
-              len([i for i in Game.item_list if i.hero_backpack and i.name == "food"]),
-              len([i for i in Game.item_list if i.hero_backpack and i.name == "gold"]),
-              len([i for i in Game.item_list if i.hero_backpack and i.name == "key"]),
-              len([i for i in Game.item_list if i.hero_backpack and i.name == "healthpot"]),
-              len([i for i in Game.item_list if i.hero_backpack])))
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "food"]),
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "gold"]),
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "key"]),
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "healthpot"]),
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number])))
         line_number = 0
-        for line in Game.dungeon[hero.z]:
+        for line in Game.dungeon[Game.hero.z]:
             pline = line[:]
             myline = ""
             
@@ -665,12 +692,12 @@ def main():
                 monster = False
                 mychar = pline[x]
                 for mymonster in Game.monster_list:
-                    if mymonster.z == hero.z and mymonster.y == line_number and mymonster.x == x:
+                    if mymonster.z == Game.hero.z and mymonster.y == line_number and mymonster.x == x:
                         monster = True
                         mychar=mymonster.symbol 
                 if not monster:        
                     for item in Game.item_list:
-                        if not item.hero_backpack and item.z == hero.z and item.y == line_number and item.x == x:
+                        if not item.carried_by and item.z == Game.hero.z and item.y == line_number and item.x == x:
                             stash.append(item)
                     if len(stash) == 1:
                         mychar=stash[0].symbol
@@ -680,14 +707,14 @@ def main():
             print(myline)
             line_number += 1
         # hero stays on special tile?
-        tile = Game.dungeon[hero.z][hero.y][hero.x]
+        tile = Game.dungeon[Game.hero.z][Game.hero.y][Game.hero.x]
         #   items // if item.x == hero.x....
         ####  hero found items?####
         stash = []
         for item in Game.item_list:
-            if hero.z == item.z and not item.hero_backpack:
-                if hero.y == item.y:
-                    if hero.x == item.x:
+            if Game.hero.z == item.z and not item.carried_by == Game.hero.number:
+                if Game.hero.y == item.y:
+                    if Game.hero.x == item.x:
                         stash.append(item)
                         
         if len(stash) > 0:
@@ -699,71 +726,72 @@ def main():
         if tile == "1":
             print("you found a lever which opened the big door")
             #dungeon[1] = dungeon [1][:4] + "." + dungeon[1][4+1:] #x + y coordinate zum entfernen!!!
-            Game.dungeon[hero.z][1] = remove_tile(44,1,hero.z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
-            Game.dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+            Game.dungeon[Game.hero.z][1] = remove_tile(44,1,Game.hero.z) #entfernt türe bei x(4) y(1) siehe 1 zeile weiter oben
+            Game.dungeon[Game.hero.z][Game.hero.y] = remove_tile(Game.hero.x,Game.hero.y,Game.hero.z)
         elif tile == "2":
             print("you found a lever which opened the big door in lvl one")
             Game.dungeon[0][1] = remove_tile(42,1,0)
-            Game.dungeon[hero.z][hero.y] = remove_tile(hero.x,hero.y,hero.z)
+            Game.dungeon[Game.hero.z][Game.hero.y] = remove_tile(Game.hero.x,Game.hero.y,Game.hero.z)
         elif tile =="<":
             print("you found a stair up (press Enter to climb up)")
         elif tile ==">":
             print("you found a stair down (press Enter to climb down)")
             
         # -----------food clock -------------------
-        hero.hp += 0.1
-        hero.hp = min(hero.hp,hero.hpmax)
-        if hero.hunger > 40:
-                hero.hp = 0
+        Game.hero.hp += 0.1
+        Game.hero.hp = min(Game.hero.hp,Game.hero.hpmax)
+        if Game.hero.hunger > 40:
+                Game.hero.hp = 0
                 print("you died")
                 break
-        elif hero.hunger > 35:
-                hero.hp -= 10
+        elif Game.hero.hunger > 35:
+                Game.hero.hp -= 10
                 print("youre starving")
-        elif hero.hunger > 25:
-                hero.hp -= 5
+        elif Game.hero.hunger > 25:
+                Game.hero.hp -= 5
                 print("you really need something to eat!")
-        elif hero.hunger > 20:
+        elif Game.hero.hunger > 20:
             print("youre stomache growls! eat something")  
         
         # ---------- ask for new command ----------
-        c = input("hp: {} mp: {} hunger: {} \ntype help or enter command:".format(int(hero.hp),hero.mp,hero.hunger))
+        c = input("hp: {} mp: {} hunger: {} \ntype help or enter command:".format(int(Game.hero.hp),Game.hero.mp,Game.hero.hunger))
         
         #-------------items-------------
+        #dropped items are not instantly picked up again, only if you hit enter
         if len(stash) > 0:
             if c == "":
                 for i in stash:
-                    i.hero_backpack = True
+                    i.carried_by = Game.hero.number
                 continue
         
         
-        hero.dx= 0
-        hero.dy= 0
+        Game.hero.dx= 0
+        Game.hero.dy= 0
         # -------- movement -----------
         if tile == "<":
             if c == "" or c == "<":
-                if hero.z == 0:
+                if Game.hero.z == 0:
                     pri_input("you leave the dungeon and return to town")
                     break
-                hero.z -= 1  # climb up
-                hero.hunger += 2
+                Game.hero.z -= 1  # climb up
+                Game.hero.hunger += 2
         elif tile == ">":
             if c == "" or c == ">":
-                if hero.z == len(Game.dungeon)-1:
+                if Game.hero.z == len(Game.dungeon)-1:
                     pri_input("you already reached the deepest dungeon")
                 else:
-                    hero.z += 1    # climb down
-                    hero.hunger += 2
+                    Game.hero.z += 1    # climb down
+                    Game.hero.hunger += 2
         if c == "a":   
-            hero.dx -= 1                # left
+            Game.hero.dx -= 1                # left
         elif c == "d":
-            hero.dx += 1                # right
+            Game.hero.dx += 1                # right
         elif c == "w":
-            hero.dy -= 1                # up
+            Game.hero.dy -= 1                # up
         elif c == "s":
-            hero.dy += 1                # down
-        if hero.dx != 0 or hero.dy != 0:
-            hero.hunger+=0.5
+            Game.hero.dy += 1                # down
+        if Game.hero.dx != 0 or Game.hero.dy != 0:
+            Game.hero.hunger+=0.5
         #---------------- other commands (non- movement) -------------
         if c == "quit" or c == "exit":
             break
@@ -777,7 +805,7 @@ def main():
             cls()
             rucksack = {}
             for item in Game.item_list:
-                if item.hero_backpack:
+                if item.carried_by == Game.hero.number:
                     if item.name in rucksack:
                         rucksack[item.name][0] += 1
                         rucksack[item.name][1] += item.weight
@@ -794,7 +822,7 @@ def main():
                 
                 print("-----------------------------\ndetailed list of wearables\n-----------------------------")
                 for item in Game.item_list:
-                    if item.symbol == "w" and item.hero_backpack:
+                    if item.symbol == "w" and item.carried_by == Game.hero.number:
                         print(" {} {} q: {:3.1f}% ({}) {} {}".format(
                               item.number,item.slot, item.quality*100,"worn" if item.worn else "pack",item.name, 
                               "" if item.boni == 0 else "\n                    boni: str {} dex {} int {} luck {}".format(
@@ -809,7 +837,7 @@ def main():
                     slot = False
                     for item in Game.item_list:
                         if item.__class__.__name__ == "Wearable":
-                            if item.number == w and item.hero_backpack:
+                            if item.number == w and item.carried_by == Game.hero.number:
                                 if item.worn:
                                     item.worn = False
                                 else:
@@ -818,7 +846,7 @@ def main():
                     if slot:   #remove wearable
                         for item in Game.item_list:
                             if item.__class__.__name__ == "Wearable":
-                                if item.number != w and item.hero_backpack and item.slot == slot:
+                                if item.number != w and item.carried_by == Game.hero.number and item.slot == slot:
                                     item.worn = False
                     print("you have changed your equipment!")
                 ### weaponscreen####
@@ -827,14 +855,14 @@ def main():
                     
                 print("-----------------------------\ndetailed list of meleeweapon\n-----------------------------")
                 for item in Game.item_list:
-                    if item.symbol == "m" and item.hero_backpack:
+                    if item.symbol == "m" and item.carried_by == Game.hero.number:
                         print(" {} ra: {} q: {:3.1f}% ({}) ({}) {} {} {}".format(
                               item.number,item.meleerange, item.quality*100, "equiped" if item.equiped else "pack","2h" if item.twohand else "1h",item.name, 
                               "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
                               item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus),
-                              "" if hero.strength >= item.min_str and hero.dexterity >= item.min_dex and hero.intelligence >= item.min_int else
+                              "" if Game.hero.strength >= item.min_str and Game.hero.dexterity >= item.min_dex and Game.hero.intelligence >= item.min_int else
                               "\n                    malus: (hero not qualified) min_str {} str {} min_dex {} dex {} min_int {} int {}".format(
-                               item.min_str, hero.strength,item.min_dex,hero.dexterity,item.min_int,hero.intelligence)))
+                               item.min_str, Game.hero.strength,item.min_dex,Game.hero.dexterity,item.min_int,Game.hero.intelligence)))
                 m = input("enter number of item to wield/unwield or press enter to continue")
                 cls()
                 try:
@@ -844,31 +872,31 @@ def main():
                 if m > 0:
                     for item in Game.item_list:
                         if item.__class__.__name__ == "Meleeweapon":
-                            if item.number == m and item.hero_backpack:
+                            if item.number == m and item.carried_by == Game.hero.number:
                                 if item.equiped:
                                     item.equiped = False
                                     if item.twohand:
-                                        hero.free_slots += 2
+                                        Game.hero.free_slots += 2
                                     else:
-                                        hero.free_slots += 1                            
+                                        Game.hero.free_slots += 1                            
                                 else:
-                                    if hero.free_slots < 1:
+                                    if Game.hero.free_slots < 1:
                                         print("you have no free weaponslot left! please unequip weapon(s) first")
-                                    elif hero.free_slots < 2 and item.twohand:
+                                    elif Game.hero.free_slots < 2 and item.twohand:
                                         print("remove both weapon(s) first to equip a 2h weapon")
                                     else:
                                         item.equiped = True 
                                         if item.twohand:
-                                            hero.free_slots -= 2
+                                            Game.hero.free_slots -= 2
                                         else:
-                                            hero.free_slots -= 1    
+                                            Game.hero.free_slots -= 1    
                     
                         
             
         elif c == "x" or c == "drop":
             rucksack = {}
             for item in Game.item_list:
-                if item.hero_backpack:
+                if item.carried_by == Game.hero.number:
                     if item.name in rucksack:
                         rucksack[item.name][0] += 1
                         rucksack[item.name][1] += item.weight
@@ -888,9 +916,9 @@ def main():
                     continue
                 for a in range(amount):
                     for item in Game.item_list:
-                        if item.name == what and item.hero_backpack:
-                            item.hero_backpack = False 
-                            item.x,item.y,item.z = hero.x,hero.y,hero.z
+                        if item.name == what and item.carried_by == Game.hero.number:
+                            item.carried_by = False 
+                            item.x,item.y,item.z = Game.hero.x,Game.hero.y,Game.hero.z
                             print("dropped 1 {}".format(item.name))
                             break
                 pri_input()
@@ -904,75 +932,75 @@ def main():
         elif c == "e" or c == "eat":
             
             #if hero.food <= 0:
-            if  len([i for i in Game.item_list if i.hero_backpack and i.name == "food"]) <= 0:
+            if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "food"]) <= 0:
                 
                 pri_input("you have no food!")
             else: 
                 #hero.food -= 1
                 n=-1
                 for i in Game.item_list:
-                    if i.hero_backpack and i.name == "food":
+                    if i.carried_by == Game.hero.number and i.name == "food":
                         n= i.number
                         break
                 Game.item_list = [i for i in Game.item_list if i.number != n]
-                hero.hunger -= 5
-                hero.hunger = max(0,hero.hunger) 
+                Game.hero.hunger -= 5
+                Game.hero.hunger = max(0,Game.hero.hunger) 
         elif c == "p" or c == "healthpot":
            # if hero.healthpot <=0:
-            if  len([i for i in Game.item_list if i.hero_backpack and i.name == "healthpot"]) <= 0:
+            if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "healthpot"]) <= 0:
                 pri_input("you have no healthpot")
             else:
                # hero.healtpot -=1
                 n=-1
                 for i in Game.item_list:
-                    if i.hero_backpack and i.name == "healthpot":
+                    if i.carried_by == Game.hero.number and i.name == "healthpot":
                         n= i.number
                         break
                 Game.item_list = [i for i in Game.item_list if i.number != n]          
-                hero.hp += random.randint(5,10)
+                Game.hero.hp += random.randint(5,10)
         elif c == "t" or c == "teleport":
-            hero.hunger += 20
-            hero.x,hero.y,hero.z = teleport(hero.z)
+            Game.hero.hunger += 20
+            Game.hero.x,Game.hero.y,Game.hero.z = teleport(Game.hero.z)
             
-        elif (c == "esc" or c == "escape") and hero.z >0:  
-            hero.hunger += 15
-            hero.hp = 1
-            hero.x,hero.y,hero.z = teleport(hero.z-1)   
+        elif (c == "esc" or c == "escape") and Game.hero.z >0:  
+            Game.hero.hunger += 15
+            Game.hero.hp = 1
+            Game.hero.x,Game.hero.y,Game.hero.z = teleport(Game.hero.z-1)   
             
         elif c == "c" or c == "check" or c == "sniff":
             # check stats of monsters nearby
             for dy in [-1,0,1]:
                 for dx in [-1,0,1]:
                     for mymonster in Game.monster_list:
-                        if mymonster.z == hero.z and mymonster.x == hero.x+dx and mymonster.y == hero.y+dy:
+                        if mymonster.z == Game.hero.z and mymonster.x == Game.hero.x+dx and mymonster.y == Game.hero.y+dy:
                             mymonster.hello(wait = False)
             pri_input()
 
         # -------- check if movement is possible -------------
-        tile = Game.dungeon[hero.z][hero.y+hero.dy][hero.x+hero.dx]
+        tile = Game.dungeon[Game.hero.z][Game.hero.y+Game.hero.dy][Game.hero.x+Game.hero.dx]
         if tile == "#":   # hero runs into wall
             pri_input("you run into a wall, ouch!")
-            hero.hp -= 1
-            hero.dx=0
-            hero.dy=0
+            Game.hero.hp -= 1
+            Game.hero.dx=0
+            Game.hero.dy=0
         if tile == "D":   # hero runs into door
             pri_input("a big door find a way to open it")
-            hero.dx=0
-            hero.dy=0
+            Game.hero.dx=0
+            Game.hero.dy=0
         if tile == "d":
             #        hero has at least 1 key?
-            if len([i for i in Game.item_list if i.hero_backpack and i.name == "key"]) > 0:
+            if len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "key"]) > 0:
                 n=-1
                 for i in Game.item_list:
-                    if i.hero_backpack and i.name == "key":
+                    if i.carried_by == Game.hero.number and i.name == "key":
                         n= i.number
                         break
                 Game.item_list = [i for i in Game.item_list if i.number != n]
-                Game.dungeon[hero.z][hero.y+hero.dy] = remove_tile(hero.x+hero.dx,hero.y+hero.dy,hero.z)
+                Game.dungeon[Game.hero.z][Game.hero.y+Game.hero.dy] = remove_tile(Game.hero.x+Game.hero.dx,Game.hero.y+Game.hero.dy,Game.hero.z)
             else:
                 pri_input("a small door find a key to open it")
-                hero.dx=0
-                hero.dy=0
+                Game.hero.dx=0
+                Game.hero.dy=0
 
             
         
@@ -983,17 +1011,17 @@ def main():
         
         occupied = []
         for mymonster in Game.monster_list:
-            if mymonster.z == hero.z:
+            if mymonster.z == Game.hero.z:
                 occupied.append((mymonster.x,mymonster.y))
         
         for mymonster in Game.monster_list:
-            if mymonster.number == hero.number:
+            if mymonster.number == Game.hero.number:
                 continue
-            if mymonster.z == hero.z:
+            if mymonster.z == Game.hero.z:
                 mymonster.move()# makes new dx/dy for monster
                 # mage shall not jump out of dungeon
-                width = len(Game.dungeon[hero.z][0])
-                height = len(Game.dungeon[hero.z])
+                width = len(Game.dungeon[Game.hero.z][0])
+                height = len(Game.dungeon[Game.hero.z])
                 if mymonster.x+mymonster.dx < 0 or mymonster.x+mymonster.dx >= width:
                     mymonster.dx = 0
                 if mymonster.y+mymonster.dy < 0 or mymonster.y+mymonster.dy >= height:
@@ -1003,10 +1031,10 @@ def main():
                 if tile == "#" or tile == "D":
                     mymonster.dx=0
                     mymonster.dy=0
-                elif mymonster.x+mymonster.dx == hero.x:
-                    if mymonster.y+mymonster.dy == hero.y:
-                        fight(mymonster,hero)
-                        fight(hero,mymonster)
+                elif mymonster.x+mymonster.dx == Game.hero.x:
+                    if mymonster.y+mymonster.dy == Game.hero.y:
+                        fight(mymonster,Game.hero)
+                        fight(Game.hero,mymonster)
                         input("press enter to continue")
                 else:
                     if (mymonster.x+mymonster.dx,mymonster.y+mymonster.dy) in occupied:
@@ -1022,14 +1050,14 @@ def main():
         # ----------- monster  battle -----------------
         
         for mymonster in Game.monster_list:
-            if mymonster.number == hero.number:
+            if mymonster.number == Game.hero.number:
                 # hero himself
                 continue # proceed to next monster in monster_list
-            if mymonster.z == hero.z:
-                if mymonster.y == hero.y+hero.dy:
-                    if mymonster.x == hero.x+hero.dx:
-                        fight(hero,mymonster) #fight
-                        fight(mymonster,hero)
+            if mymonster.z == Game.hero.z:
+                if mymonster.y == Game.hero.y+Game.hero.dy:
+                    if mymonster.x == Game.hero.x+Game.hero.dx:
+                        fight(Game.hero,mymonster) #fight
+                        fight(mymonster,Game.hero)
                         if mymonster.hp <1:
                             # monster down , drop?
                             # special drop
@@ -1038,16 +1066,29 @@ def main():
                                 Game.dungeon[4][9] = remove_tile(40,9,4)
                             if mymonster.__class__.__name__ == "Lord":
                                 print("you have slain the dark lord and completed the quest")
-                                victory = True                            
+                                victory = True                          
+                            droppings = False
                             if random.random() <0.25:
-                                Game.item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k","w"))))
+                                Game.item_list.append(Item(mymonster.x,mymonster.y,mymonster.z,random.choice(("$","f","p","k"))))
                                 print("the monster dropped something!")
-                            hero.history.append("turn {}: slain a {}".format(turns,mymonster.__class__.__name__))
+                                droppings = True
+                            for i in Game.item_list:
+                                if i.carried_by == mymonster.number:
+                                    if random.random() <0.15:
+                                        droppings = True
+                                        print("spoils of war: ", i.name)
+                                        i.carried_by = False
+                                        i.x = mymonster.x
+                                        i.y = mymonster.y
+                                        i.z = mymonster.z
+                            if droppings:
+                                pri_input()
+                            Game.hero.history.append("turn {}: slain a {}".format(turns,mymonster.__class__.__name__))
                             m = mymonster.__class__.__name__
-                            if m in hero.trophy:
-                                hero.trophy[m] += 1
+                            if m in Game.hero.trophy:
+                                Game.hero.trophy[m] += 1
                             else:
-                                hero.trophy[m] = 1
+                                Game.hero.trophy[m] = 1
                         input("press enter to continue")
                         
         #  remove monster from monsterlist
@@ -1056,11 +1097,9 @@ def main():
 
         
         # movement
-        hero.x += hero.dx
-        hero.y += hero.dy
+        Game.hero.x += Game.hero.dx
+        Game.hero.y += Game.hero.dy
 
-    #### for x in range(20):
-    ####print("str",random.gauss(10, 2),"int",random.gauss(5, 1))
 
             
             
@@ -1068,9 +1107,9 @@ def main():
 
     print("history of hero:")
     input("press enter to continue")
-    for m in hero.trophy:
-        print(m,hero.trophy[m])
-    for line in hero.history:
+    for m in Game.hero.trophy:
+        print(m,Game.hero.trophy[m])
+    for line in Game.hero.history:
         print(line)
 
 
