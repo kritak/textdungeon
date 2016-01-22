@@ -349,11 +349,11 @@ class Monster(Dungeonobject):
             for slot in Game.slots:
                 if slot == "body":
                     continue
-                if random.random() < 0.05:
+                if random.random() < self.equip_chance:
                     Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = slot))
             #weapon
             Game.item_list.append(Meleeweapon(self.x,self.y,self.z,"m", carried_by = self.number))
-            self.hello()
+            #self.hello()
         
         
     def move(self):
@@ -429,6 +429,19 @@ class Ysera(Monster):
     
     def init3(self):
         self.equip_chance=Game.zoo[self.symbol][10]
+        
+class Bonewarrior(Monster):
+    
+    def init3(self):
+        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip()
+        
+        
+class Goblin(Monster):
+    
+    def init3(self):
+        self.equip_chance=Game.zoo[self.symbol][10]
+        self.equip()
             
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
@@ -637,6 +650,10 @@ def main():
                                 Game.monster_list.append(Mage(lx,ly,lz,char))
                             elif char == "Y":
                                 Game.monster_list.append(Ysera(lx,ly,lz,char))
+                            elif char == "B":
+                                Game.monster_list.append(Bonewarrior(lx,ly,lz,char))
+                            elif char == "G":
+                                Game.monster_list.append(Goblin(lx,ly,lz,char))
                             line = line[:lx]+"."+line[lx+1:]
                         lx += 1
                     lines[ly] = line
