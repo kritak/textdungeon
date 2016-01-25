@@ -91,24 +91,24 @@ def fight(i1,i2):
         print("{} has {} hp left".format(i2.name,int(i2.hp)))
         if i2.hp < 1:
             print("{} lose, {} wins the fight".format(i2.name,i1.name))
-        else:
-            i1.dx=0
-            i1.dy=0
-            i2.dx=0
-            i2.dy=0
+        #else:
+           # i1.dx=0
+           # i1.dy=0
+           # i2.dx=0
+           # i2.dy=0
     # --------------- i1 misses, i2 attacks instead------------
     elif i1_roll == i2_roll:
         print("its a draw - no damage taken")
-        i1.dx=0
-        i1.dy=0
-        i2.dx=0
-        i2.dy=0
+       # i1.dx=0
+       # i1.dy=0
+       # i2.dx=0
+       # i2.dy=0
     else:
         print("attack failed.. no damage")
-        i1.dx=0
-        i1.dy=0
-        i2.dx=0
-        i2.dy=0
+       # i1.dx=0
+       # i1.dy=0
+       # i2.dx=0
+       # i2.dy=0
             
             
 class Dungeonobject():
@@ -336,10 +336,18 @@ class Monster(Dungeonobject):
         self.attack1=Game.zoo[self.symbol][3]       
         self.dx=0
         self.dy=0
+        self.jumprange = 1
         self.hp=random.gauss(Game.zoo[self.symbol][4], self.sigma)
         self.strength=random.gauss(Game.zoo[self.symbol][5], self.sigma)
         self.dexterity=random.gauss(Game.zoo[self.symbol][6], self.sigma)
         self.intelligence=random.gauss(Game.zoo[self.symbol][7], self.sigma)
+        self.states ={"patrol": ["hunt","sleep","fight"],
+                     "sleep": ["patrol"],
+                     "hunt": ["fight","patrol"],
+                     "fight": ["patrol","hunt","flee"],
+                     "flee": ["patrol"]}
+        self.state = "patrol"
+        self.sniffrange = 3
         self.init3()
         
     def init3(self):
@@ -347,7 +355,7 @@ class Monster(Dungeonobject):
     
     def equip(self):
         """gibt monster zufalls item"""
-        if self.equip_chance > 0:
+        if self.equip_chance > 0: #wenn größer 0 garantiere "Body" rüstung
             i = Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = "body"))
             # i.worn = True    
             for slot in Game.slots:
@@ -360,9 +368,46 @@ class Monster(Dungeonobject):
             #self.hello()
         
         
-    def move(self):
-        self.dx=random.randint(-1,1)
-        self.dy=random.randint(-1,1)
+    def move(self,hero):
+        # sniffing hero?
+        if self.__class__.__name__ == "Hero":
+            return
+        self.dx = 0
+        self.dy = 0
+        if self.state == "hunt":
+            self.state = "patrol"
+        if self.state == "patrol" and hero.z == self.z:
+            dist = ((self.x-hero.x)**2+(self.y-hero.y)**2)**0.5 #**2 quadrieren / **0.5 = wurzelziehen
+            if dist <= self.sniffrange:
+                self.state = "hunt"
+        if self.state == "hunt":
+            print("hunting")
+            pri_input()
+            #clever movement
+            if self.x < hero.x:
+                self.dx = 1
+            elif self.x > hero.x:
+                self.dx = -1
+            if self.y < hero.y:
+                self.dy = 1
+            elif self.y > hero.y:
+                self.dy = -1
+        elif self.state == "flee":
+            if self.x < hero.x:
+                self.dx = -1
+            elif self.x > hero.x:
+                self.dx = 1
+            if self.y < hero.y:
+                self.dy = -1
+            elif self.y > hero.y:
+                self.dy = 1
+        elif self.state == "patrol":           
+            self.dx=random.randint(-1,1)
+            self.dy=random.randint(-1,1)
+            ## jump?
+            if self.jumprange > 1:
+                self.dx *= random.randint(1, self.jumprange)
+                self.dy *= random.randint(1, self.jumprange)
         
     def hello(self, wait = True):
         print("---------------------------")
@@ -377,10 +422,10 @@ class Monster(Dungeonobject):
         
         
       #  for x in range(10):
-	#print(int(round(random.gauss(0, 1),0)))
+    #print(int(round(random.gauss(0, 1),0)))
         
 class Statue(Monster):
-    def move(self):
+    def move(self,hero):
         self.dx = 0
         self.dy = 0
     
@@ -389,7 +434,7 @@ class Statue(Monster):
 
 class Hero(Monster):
     
-    def move(self):
+    def move(self,hero):
         pass
         
     def init3(self):
@@ -417,17 +462,14 @@ class Ogre(Monster):
         self.equip()
         
 class Mage(Monster):
-    
-    def move(self):
-        self.dx=random.randint(-4,4)
-        self.dy=random.randint(-4,4)
         
     def init3(self):
         self.equip_chance=Game.zoo[self.symbol][10]
         self.equip()
+        self.jumprange = 4
         
 class Ysera(Monster):
-    def move(self):
+    def move(self,hero):
         self.dx = 0
         self.dy = 0
     
@@ -446,6 +488,7 @@ class Goblin(Monster):
     def init3(self):
         self.equip_chance=Game.zoo[self.symbol][10]
         self.equip()
+        self.jumprange = 2
             
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
@@ -461,7 +504,7 @@ class Rect():
     
 class Game():
     
-    spoils_of_war_chance= 1.00
+    spoils_of_war_chance= 0.15
     instakill = False  # set true for cheatmode!
     
     dungeon = [] 
@@ -807,13 +850,13 @@ def main():
                     Game.hero.z += 1    # climb down
                     Game.hero.hunger += 2
         if c == "a":   
-            Game.hero.dx -= 1                # left
+            Game.hero.dx = -1                # left
         elif c == "d":
-            Game.hero.dx += 1                # right
+            Game.hero.dx = 1                # right
         elif c == "w":
-            Game.hero.dy -= 1                # up
+            Game.hero.dy = -1                # up
         elif c == "s":
-            Game.hero.dy += 1                # down
+            Game.hero.dy = 1                # down
         if Game.hero.dx != 0 or Game.hero.dy != 0:
             Game.hero.hunger+=0.5
         #---------------- other commands (non- movement) -------------
@@ -1042,7 +1085,7 @@ def main():
             if mymonster.number == Game.hero.number:
                 continue
             if mymonster.z == Game.hero.z:
-                mymonster.move()# makes new dx/dy for monster
+                mymonster.move(Game.hero)# makes new dx/dy for monster
                 # mage shall not jump out of dungeon
                 width = len(Game.dungeon[Game.hero.z][0])
                 height = len(Game.dungeon[Game.hero.z])
@@ -1052,7 +1095,7 @@ def main():
                     mymonster.dy = 0    
                     
                 tile = Game.dungeon[mymonster.z][mymonster.y+mymonster.dy][mymonster.x+mymonster.dx]
-                if tile == "#" or tile == "D":
+                if tile == "#" or tile == "D" or tile == "d":
                     mymonster.dx=0
                     mymonster.dy=0
                 elif mymonster.x+mymonster.dx == Game.hero.x:
