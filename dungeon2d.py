@@ -72,6 +72,8 @@ def fight(i1,i2):
                         itemname = item.name
                         break
         damage = random.randint(1,i1.damage)
+        if i1.__class__.__name__ == "Hero" and Game.instakill: 
+            damage = 500
         if d < i1.strength/100:
             if d > i2.strength/100:
                 print("critical damage! (x3)")
@@ -317,6 +319,7 @@ class Monster(Dungeonobject):
 
     @staticmethod
     def destiny():
+        """sucht monster aus"""
         r = random.randint(0,Monster.price_sum)  
         for m in Monster.prices:
             if m >= r:
@@ -343,6 +346,7 @@ class Monster(Dungeonobject):
         pass
     
     def equip(self):
+        """gibt monster zufalls item"""
         if self.equip_chance > 0:
             i = Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = "body"))
             # i.worn = True    
@@ -456,6 +460,9 @@ class Rect():
         
     
 class Game():
+    
+    spoils_of_war_chance= 1.00
+    instakill = False  # set true for cheatmode!
     
     dungeon = [] 
     monster_list = []
@@ -729,7 +736,7 @@ def main():
         ####  hero found items?####
         stash = []
         for item in Game.item_list:
-            if Game.hero.z == item.z and not item.carried_by == Game.hero.number:
+            if Game.hero.z == item.z and not item.carried_by:
                 if Game.hero.y == item.y:
                     if Game.hero.x == item.x:
                         stash.append(item)
@@ -1091,7 +1098,7 @@ def main():
                                 droppings = True
                             for i in Game.item_list:
                                 if i.carried_by == mymonster.number:
-                                    if random.random() <0.15:
+                                    if random.random() < Game.spoils_of_war_chance:
                                         droppings = True
                                         print("spoils of war: ", i.name)
                                         i.carried_by = False
