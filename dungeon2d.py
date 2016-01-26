@@ -41,8 +41,6 @@ def fight(i1,i2):
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
-    #i1.hello(False)
-    #i2.hello(False)
     #---------------- p_feint (int + dex)/100
     finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
@@ -152,16 +150,37 @@ class Item(Dungeonobject):
         for p in Item.prices:
             if p >= r:
                 return Item.drop[p]
-                #break
 
     def __init__(self, x,y,z, symbol, carried_by=False):
         Dungeonobject.__init__(self, x,y,z, symbol)
-       # self.hero_backpack= carried_by # carried by hero
         self.carried_by= carried_by
     
     def init2(self):
         self.weight= Game.items[self.symbol][1]
         
+        
+class Pot(Item):
+    """useable pots"""
+    
+    drop = {}
+    price_sum = 0
+    prices = []
+    
+        
+        
+    def init2(self):
+        #print(Pot.drop, Pot.price_sum, Pot.prices)
+        #pri_input()
+        # what kind of pot did we find?
+        r = random.randint(0,Pot.price_sum)  
+        for d in Pot.prices:
+            if d >= r:
+                self.name = Pot.drop[d]
+                break
+        self.price = Game.pots[self.name][0]
+        self.weight = Game.pots[self.name][1]
+        self.turns = Game.pots[self.name][2]
+    
 class Wearable(Item):
     """wearable items (head ..shoulders..hands...)"""
     
@@ -381,8 +400,6 @@ class Monster(Dungeonobject):
             if dist <= self.sniffrange:
                 self.state = "hunt"
         if self.state == "hunt":
-            print("hunting")
-            pri_input()
             #clever movement
             if self.x < hero.x:
                 self.dx = 1
@@ -505,7 +522,7 @@ class Rect():
 class Game():
     
     spoils_of_war_chance= 0.15
-    instakill = False  # set true for cheatmode!
+    instakill = True  # set true for cheatmode!
     
     dungeon = [] 
     monster_list = []
@@ -520,6 +537,7 @@ class Game():
     wearables = {}
     meleeweapons = {}
     items = {}
+    pots = {}
     
 def main():
     
@@ -628,6 +646,30 @@ def main():
         Meleeweapon.prices.append(price_sum)
     Meleeweapon.price_sum = price_sum
     Meleeweapon.prices.sort()    
+    
+    
+    ## --------------read potions from file -------------------------------
+    with open(os.path.join("dungeons","pots.csv")) as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            Game.pots[row["Name"]] = [
+                                  int(row["Price"]),
+                                  float(row["Weight"]),
+                                  int(row["Turns"]),
+                                    ]
+    max_price=0    # ----find highest price (pot droppchance)
+    for p in Game.pots:
+        price = Game.pots[p][0]
+        if price > max_price:
+            max_price = price
+    price_sum=0    # --- calculate relative potdropchance
+    for p in Game.pots:
+        price = max_price*1.2-Game.pots[p][0]
+        price_sum += price
+        Pot.drop[price_sum] = p
+        Pot.prices.append(price_sum)
+    Pot.price_sum = price_sum
+    Pot.prices.sort()    
 
 
 
@@ -682,6 +724,8 @@ def main():
                                 Game.item_list.append(Wearable(lx,ly,lz,char))
                             elif char == "m":
                                 Game.item_list.append(Meleeweapon(lx,ly,lz,char))
+                            elif char == "p":
+                                Game.item_list.append(Pot(lx,ly,lz,char))
                             else:
                                 Game.item_list.append(Item(lx,ly,lz,char))
                             line = line[:lx]+"."+line[lx+1:]
@@ -1012,15 +1056,15 @@ def main():
                 Game.item_list = [i for i in Game.item_list if i.number != n]
                 Game.hero.hunger -= 5
                 Game.hero.hunger = max(0,Game.hero.hunger) 
-        elif c == "p" or c == "healthpot":
+        elif c == "heal" or c == "healthpot":
            # if hero.healthpot <=0:
-            if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "healthpot"]) <= 0:
+            if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "Healthpot"]) <= 0:
                 pri_input("you have no healthpot")
             else:
                # hero.healtpot -=1
                 n=-1
                 for i in Game.item_list:
-                    if i.carried_by == Game.hero.number and i.name == "healthpot":
+                    if i.carried_by == Game.hero.number and i.name == "Healthpot":
                         n= i.number
                         break
                 Game.item_list = [i for i in Game.item_list if i.number != n]          
