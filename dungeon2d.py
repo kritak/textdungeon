@@ -180,6 +180,12 @@ class Pot(Item):
         self.price = Game.pots[self.name][0]
         self.weight = Game.pots[self.name][1]
         self.turns = Game.pots[self.name][2]
+        self.e_str = Game.pots[self.name][3]
+        self.e_dex = Game.pots[self.name][4]
+        self.e_int = Game.pots[self.name][5]
+        self.e_hp = Game.pots[self.name][6]  
+        
+        
     
 class Wearable(Item):
     """wearable items (head ..shoulders..hands...)"""
@@ -367,10 +373,33 @@ class Monster(Dungeonobject):
                      "flee": ["patrol"]}
         self.state = "patrol"
         self.sniffrange = 3
+        self.effects_str = []
+        self.effects_dex = []
+        self.effects_int = []
+        self.effects_hp = []
         self.init3()
         
     def init3(self):
         pass
+        
+    def drink(self,potion):
+        """stats effects from potions"""
+        #potion is the Pot class instance
+        
+        if potion.e_str != 0:
+            if potion.turns == 0:
+                # perma
+                self.strength += potion.e_str
+            else:
+                #  temporary
+                #[[4, 2], [13, 1], [2, -2], [0, -5]]
+                #>>> [[a-1,b] for [a,b] in s2 if a>0]
+                # duration, effect
+                self.effects_str.append([potion.turns, potion.e_str])
+        
+        if potion.e_dex != 0:
+            pass#hier weitermachen
+        
     
     def equip(self):
         """gibt monster zufalls item"""
@@ -656,6 +685,10 @@ def main():
                                   int(row["Price"]),
                                   float(row["Weight"]),
                                   int(row["Turns"]),
+                                  int(row["E_str"]),
+                                  int(row["E_dex"]),
+                                  int(row["E_int"]),
+                                  int(row["E_hp"])
                                     ]
     max_price=0    # ----find highest price (pot droppchance)
     for p in Game.pots:
@@ -1001,8 +1034,29 @@ def main():
                                             Game.hero.free_slots -= 2
                                         else:
                                             Game.hero.free_slots -= 1    
+                                            
+            ### potionscreen####
+            p = 1
+            while p != 0:
                     
-                        
+                print("-----------------------------\ndetailed list of potions\n-----------------------------")
+                for item in Game.item_list:
+                    if item.symbol == "p" and item.carried_by == Game.hero.number:
+                        print(" {} {}".format(item.number,item.name)
+                p = input("enter number of potion to drink or press enter to continue")
+                cls()
+                try:
+                    p = int(p)
+                except:
+                    p = 0
+                if p > 0:
+                    for item in Game.item_list:
+                        if item.__class__.__name__ == "Pot":
+                            if item.number == p and item.carried_by == Game.hero.number:
+                                print("you feel the power of the potion")
+                                Game.hero.drink(item)
+                                Game.item_list = [i for i in Game.item_list if i.number != p] #remove item from item_list
+                                
             
         elif c == "x" or c == "drop":
             rucksack = {}
@@ -1053,22 +1107,24 @@ def main():
                     if i.carried_by == Game.hero.number and i.name == "food":
                         n= i.number
                         break
-                Game.item_list = [i for i in Game.item_list if i.number != n]
+                Game.item_list = [i for i in Game.item_list if i.number != n] #remove item from item_list
                 Game.hero.hunger -= 5
                 Game.hero.hunger = max(0,Game.hero.hunger) 
-        elif c == "heal" or c == "healthpot":
+        #elif c == "drink" or c == "potion":
            # if hero.healthpot <=0:
-            if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "Healthpot"]) <= 0:
-                pri_input("you have no healthpot")
-            else:
+        #    if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.__class__.__name__ == "Pot"]) <= 0:
+         #       pri_input("you have no potion")
+          #  else:
                # hero.healtpot -=1
-                n=-1
-                for i in Game.item_list:
-                    if i.carried_by == Game.hero.number and i.name == "Healthpot":
-                        n= i.number
-                        break
-                Game.item_list = [i for i in Game.item_list if i.number != n]          
-                Game.hero.hp += random.randint(5,10)
+           #     n=-1
+            #    for i in Game.item_list:
+             #       if i.carried_by == Game.hero.number and i.__class__.__name__ == "Pot":
+              #          n= i.number
+               #         break
+               # Game.item_list = [i for i in Game.item_list if i.number != n]          
+               # Game.hero.hp += random.randint(5,10)
+                
+                
         elif c == "t" or c == "teleport":
             Game.hero.hunger += 20
             Game.hero.x,Game.hero.y,Game.hero.z = teleport(Game.hero.z)
