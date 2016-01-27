@@ -9,7 +9,6 @@ e / eat - eat the food
 enter/< - climb stair up
 enter/> - climb stair down
 i - inventory
-p / healtpot - healthpot
 t / teleport - teleport
 ? / help - help menu
 esc / escape - flee to a random position
