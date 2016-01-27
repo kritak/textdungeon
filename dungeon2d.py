@@ -179,12 +179,20 @@ class Pot(Item):
                 break
         self.price = Game.pots[self.name][0]
         self.weight = Game.pots[self.name][1]
-        self.turns = Game.pots[self.name][2]
-        self.e_str = Game.pots[self.name][3]
-        self.e_dex = Game.pots[self.name][4]
-        self.e_int = Game.pots[self.name][5]
-        self.e_hp = Game.pots[self.name][6]  
-        
+        if self.name == "Mysterypot":
+            self.turns = random.randint(6, 10)
+            self.e_str = random.randint(-5, 5)
+            self.e_dex = random.randint(-5, 5)
+            self.e_int = random.randint(-5, 5)
+            self.e_hp = random.randint(-40, 40)
+            
+        else:
+            self.turns = Game.pots[self.name][2]
+            self.e_str = Game.pots[self.name][3]
+            self.e_dex = Game.pots[self.name][4]
+            self.e_int = Game.pots[self.name][5]
+            self.e_hp = Game.pots[self.name][6]  
+            
         
     
 class Wearable(Item):
@@ -377,10 +385,83 @@ class Monster(Dungeonobject):
         self.effects_dex = []
         self.effects_int = []
         self.effects_hp = []
+        self.effects_str_bonus = 0
+        self.effects_dex_bonus = 0
+        self.effects_int_bonus = 0
+        self.effects_hp_bonus = 0
         self.init3()
         
     def init3(self):
         pass
+        
+    def stat_effects_tick(self):
+        """decrease the duration of stat effects"""
+        
+        self.effects_str = [[a-1,b] for [a,b] in self.effects_str if a > 0]
+        self.effects_dex = [[a-1,b] for [a,b] in self.effects_dex if a > 0]
+        self.effects_int = [[a-1,b] for [a,b] in self.effects_int if a > 0]
+        self.effects_hp = [[a-1,b] for [a,b] in self.effects_hp if a > 0]
+        self.effects_str_bonus = 0
+        self.effects_dex_bonus = 0
+        self.effects_int_bonus = 0
+        self.effects_hp_bonus = 0
+
+        """calculate maximal negative or positiv str effect for this turn"""
+        if len(self.effects_str) > 0:
+            maxvalues = [b for [a,b] in self.effects_str if b > 0]
+            minvalues = [b for [a,b] in self.effects_str if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.effects_str_bonus = maxeffect + mineffect
+            
+        #    self.effects_str_bonus = max([b for [a,b] in self.effects_str if b > 0]) - min([b for [a,b] in self.effects_str if b < 0])
+        if len(self.effects_dex) > 0:
+            maxvalues = [b for [a,b] in self.effects_dex if b > 0]
+            minvalues = [b for [a,b] in self.effects_dex if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.effects_dex_bonus = maxeffect + mineffect
+             
+        if len(self.effects_int) > 0:
+            maxvalues = [b for [a,b] in self.effects_int if b > 0]
+            minvalues = [b for [a,b] in self.effects_int if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.effects_int_bonus = maxeffect + mineffect
+            
+            
+        if len(self.effects_hp) > 0:
+            maxvalues = [b for [a,b] in self.effects_hp if b > 0]
+            minvalues = [b for [a,b] in self.effects_hp if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.effects_hp_bonus = maxeffect + mineffect
+            
+            
         
     def drink(self,potion):
         """stats effects from potions"""
@@ -398,7 +479,23 @@ class Monster(Dungeonobject):
                 self.effects_str.append([potion.turns, potion.e_str])
         
         if potion.e_dex != 0:
-            pass#hier weitermachen
+            if potion.turns == 0:
+                self.dexterity += potion.e_dex
+            else:
+                self.effects_dex.append([potion.turns, potion.e_dex])
+                
+        if potion.e_int != 0:
+            if potion.turns == 0:
+                self.intelligence += potion.e_int
+            else:
+                self.effects_int.append([potion.turns, potion.e_int])
+        
+        if potion.e_hp != 0:
+            if potion.turns == 0:
+                self.hp += potion.e_hp
+            else:
+                self.effects_hp.append([potion.turns, potion.e_hp])
+                
         
     
     def equip(self):
@@ -551,7 +648,7 @@ class Rect():
 class Game():
     
     spoils_of_war_chance= 0.15
-    instakill = True  # set true for cheatmode!
+    instakill = False  # set true for cheatmode!
     
     dungeon = [] 
     monster_list = []
@@ -820,7 +917,7 @@ def main():
               len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "food"]),
               len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "gold"]),
               len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "key"]),
-              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "healthpot"]),
+              len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.__class__.__name__ == "Pot"]),
               len([i for i in Game.item_list if i.carried_by == Game.hero.number])))
         line_number = 0
         for line in Game.dungeon[Game.hero.z]:
@@ -898,7 +995,11 @@ def main():
             print("youre stomache growls! eat something")  
         
         # ---------- ask for new command ----------
-        c = input("hp: {} mp: {} hunger: {} \ntype help or enter command:".format(int(Game.hero.hp),Game.hero.mp,Game.hero.hunger))
+        c = input("hp: {} ({}) mp: {} hunger: {} \nstr: {:.0f} ({}) dex: {:.0f} ({}) int: {:.0f} ({}) \ntype help or enter command:".format(
+                  int(Game.hero.hp), Game.hero.effects_hp_bonus,Game.hero.mp,Game.hero.hunger,
+                  Game.hero.strength, Game.hero.effects_str_bonus,
+                  Game.hero.dexterity,Game.hero.effects_dex_bonus,
+                  Game.hero.intelligence, Game.hero.effects_int_bonus))
         
         #-------------items-------------
         #dropped items are not instantly picked up again, only if you hit enter
@@ -1042,7 +1143,7 @@ def main():
                 print("-----------------------------\ndetailed list of potions\n-----------------------------")
                 for item in Game.item_list:
                     if item.symbol == "p" and item.carried_by == Game.hero.number:
-                        print(" {} {}".format(item.number,item.name)
+                        print(" {} {}".format(item.number,item.name))
                 p = input("enter number of potion to drink or press enter to continue")
                 cls()
                 try:
@@ -1110,20 +1211,6 @@ def main():
                 Game.item_list = [i for i in Game.item_list if i.number != n] #remove item from item_list
                 Game.hero.hunger -= 5
                 Game.hero.hunger = max(0,Game.hero.hunger) 
-        #elif c == "drink" or c == "potion":
-           # if hero.healthpot <=0:
-        #    if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.__class__.__name__ == "Pot"]) <= 0:
-         #       pri_input("you have no potion")
-          #  else:
-               # hero.healtpot -=1
-           #     n=-1
-            #    for i in Game.item_list:
-             #       if i.carried_by == Game.hero.number and i.__class__.__name__ == "Pot":
-              #          n= i.number
-               #         break
-               # Game.item_list = [i for i in Game.item_list if i.number != n]          
-               # Game.hero.hp += random.randint(5,10)
-                
                 
         elif c == "t" or c == "teleport":
             Game.hero.hunger += 20
@@ -1142,6 +1229,18 @@ def main():
                         if mymonster.z == Game.hero.z and mymonster.x == Game.hero.x+dx and mymonster.y == Game.hero.y+dy:
                             mymonster.hello(wait = False)
             pri_input()
+            
+        #--------- potion effects ---------------------------
+        for mymonster in Game.monster_list:
+            mymonster.stat_effects_tick()
+        # kill monsters without hitpoints
+        #  remove monster from monsterlist
+        if Game.hero.hp + Game.hero.effects_hp_bonus < 0:
+            print("you die due to negative hitpoints")
+            pri_input()
+        Game.monster_list = [m for m in Game.monster_list if (m.hp + m.effects_hp_bonus) > 0]
+                
+                
 
         # -------- check if movement is possible -------------
         tile = Game.dungeon[Game.hero.z][Game.hero.y+Game.hero.dy][Game.hero.x+Game.hero.dx]
