@@ -393,6 +393,32 @@ class Monster(Dungeonobject):
         
     def init3(self):
         pass
+       
+    def effect_min_max(self, effectname):
+        """takes one effectname ("str", "dex", "int", "hp") as parameter.
+           calculates the max positive effect and the min negative effect
+           from self.effects_[effectname]. returns the sum of min and max,
+           the resulting effect, and sets self.effects_[effectname]_bonus to it"""
+        if effectname not in ("str","dex","int","hp"):
+            pri_input("Error: not yet coded effect name: "+ effectname)
+        
+        effect = "effects_"+effectname
+        bonus = "effects_"+effectname+"_bonus"
+        
+        if len(self.__getattribute__(effect)) > 0:
+            maxvalues = [b for [a,b] in self.__getattribute__(effect) if b > 0]
+            minvalues = [b for [a,b] in self.__getattribute__(effect) if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.__setattr__(bonus, maxeffect + mineffect)
+        
+        
         
     def stat_effects_tick(self):
         """decrease the duration of stat effects"""
@@ -405,64 +431,13 @@ class Monster(Dungeonobject):
         self.effects_dex_bonus = 0
         self.effects_int_bonus = 0
         self.effects_hp_bonus = 0
+        # setting values
+        self.effect_min_max("str")
+        self.effect_min_max("dex")
+        self.effect_min_max("int")
+        self.effect_min_max("hp")
 
-        """calculate maximal negative or positiv str effect for this turn"""
-        if len(self.effects_str) > 0:
-            maxvalues = [b for [a,b] in self.effects_str if b > 0]
-            minvalues = [b for [a,b] in self.effects_str if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_str_bonus = maxeffect + mineffect
-            
-        #    self.effects_str_bonus = max([b for [a,b] in self.effects_str if b > 0]) - min([b for [a,b] in self.effects_str if b < 0])
-        if len(self.effects_dex) > 0:
-            maxvalues = [b for [a,b] in self.effects_dex if b > 0]
-            minvalues = [b for [a,b] in self.effects_dex if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_dex_bonus = maxeffect + mineffect
-             
-        if len(self.effects_int) > 0:
-            maxvalues = [b for [a,b] in self.effects_int if b > 0]
-            minvalues = [b for [a,b] in self.effects_int if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_int_bonus = maxeffect + mineffect
-            
-            
-        if len(self.effects_hp) > 0:
-            maxvalues = [b for [a,b] in self.effects_hp if b > 0]
-            minvalues = [b for [a,b] in self.effects_hp if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_hp_bonus = maxeffect + mineffect
-            
-            
-        
+      
     def drink(self,potion):
         """stats effects from potions"""
         #potion is the Pot class instance
