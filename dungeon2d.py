@@ -1284,7 +1284,7 @@ def main():
             if mymonster.number == Game.hero.number:
                 continue
             if mymonster.z == Game.hero.z:
-                mymonster.move(Game.hero)# makes new dx/dy for monster
+                mymonster.move(Game.hero)  # makes new dx/dy for monster, monsters are hunting player
                 # mage shall not jump out of dungeon
                 width = len(Game.dungeon[Game.hero.z][0])
                 height = len(Game.dungeon[Game.hero.z])
@@ -1292,9 +1292,10 @@ def main():
                     mymonster.dx = 0
                 if mymonster.y+mymonster.dy < 0 or mymonster.y+mymonster.dy >= height:
                     mymonster.dy = 0    
-                    
+                # where does the monster want to go to?    
                 tile = Game.dungeon[mymonster.z][mymonster.y+mymonster.dy][mymonster.x+mymonster.dx]
-                if tile == "#" or tile == "D" or tile == "d":
+                # doors and walls are forbidden
+                if tile == "#" or tile == "D" or tile == "d": 
                     mymonster.dx=0
                     mymonster.dy=0
                 elif mymonster.x+mymonster.dx == Game.hero.x:
@@ -1322,6 +1323,8 @@ def main():
             if mymonster.z == Game.hero.z:
                 if mymonster.y == Game.hero.y+Game.hero.dy:
                     if mymonster.x == Game.hero.x+Game.hero.dx:
+                        Game.hero.dx = 0
+                        Game.hero.dy = 0
                         fight(Game.hero,mymonster) #fight
                         fight(mymonster,Game.hero)
                         if mymonster.hp <1:
@@ -1355,6 +1358,7 @@ def main():
                                 Game.hero.trophy[m] += 1
                             else:
                                 Game.hero.trophy[m] = 1
+                        
                         input("press enter to continue")
                         
         #  remove monster from monsterlist
