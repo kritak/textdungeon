@@ -41,6 +41,46 @@ def fight(i1,i2):
     if i1.hp <1 or i2.hp <1:
         return
     print("{} fights {}".format(i1.name,i2.name))
+    i1weapons = []
+    i1armor = []
+    i2weapons = []
+    i2armor = []
+    #i1weapon equipped?
+    for item in Game.item_list:
+        if item.carried_by == i1.number:
+            if item.__class__.__name__ == "Meleeweapon":
+                if item.equiped:
+                    i1weapons.append(item)
+            if item.__class__.__name__ == "Wearable":
+                if item.worn:
+                    i1armor.append(item)
+        if item.carried_by == i2.number:
+            if item.__class__.__name__ == "Meleeweapon":
+                if item.equiped:
+                    i2weapons.append(item)
+            if item.__class__.__name__ == "Wearable":
+                if item.worn:
+                    i2armor.append(item)
+    #weaponrange
+    i1weaponrange = 0
+    i2weaponrange = 0
+    
+    for w in i1weapons:
+        if w.meleerange > i1weaponrange:
+            i1weaponrange = w.meleerange
+    for w in i2weapons:
+        if w.meleerange > i2weaponrange:
+            i2weaponrange = w.meleerange
+            
+            
+    #all resistence set to 0
+    #random.choose slot to hit
+    #iterate over armor (defender)
+    #check if hit slot has armor(resistence)
+    
+
+        
+                     
     #---------------- p_feint (int + dex)/100
     finte = random.random() # 0-1
     i1_roll = random.randint(1,i1.attack_roll)
@@ -52,6 +92,11 @@ def fight(i1,i2):
     #------------------defence roll-----------------------------
     i2_roll = random.randint(1,i2.attack_roll)       
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
+    #------------------parry chance for defender-----------------
+    if i2weaponrange > i1weaponrange:
+        if random.random()<Game.parrychance:
+            print("defending {} succesfully parried with his longer weapon".format(i2.name))
+            return
     #----- did i1hit i2 ? --------------
     # --------------------- i1 hit sucessfully -----------------------
     if i1_roll > i2_roll:
@@ -476,16 +521,22 @@ class Monster(Dungeonobject):
     def equip(self):
         """gibt monster zufalls item"""
         if self.equip_chance > 0: #wenn größer 0 garantiere "Body" rüstung
-            i = Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = "body"))
-            # i.worn = True    
+            i = Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = "body")
+            i.worn = True
+            Game.item_list.append(i)
             for slot in Game.slots:
                 if slot == "body":
                     continue
                 if random.random() < self.equip_chance:
-                    Game.item_list.append(Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = slot))
+                    i = Wearable(self.x,self.y,self.z,"w", carried_by = self.number, slot = slot)
+                    i.worn = True
+                    Game.item_list.append(i)
             #weapon
-            Game.item_list.append(Meleeweapon(self.x,self.y,self.z,"m", carried_by = self.number))
+            m = Meleeweapon(self.x,self.y,self.z,"m", carried_by = self.number)
+            m.equiped = True
+            Game.item_list.append(m)
             #self.hello()
+            # Todo 2 hand weapon for monster - dualwield
         
         
     def move(self,hero):
@@ -622,7 +673,8 @@ class Rect():
     
 class Game():
     
-    spoils_of_war_chance= 0.15
+    spoils_of_war_chance= 0.15 #chance of slain monster to drop item
+    parrychance= 0.33 # parrychance to block attack - longer weaponrange of defender
     instakill = False  # set true for cheatmode!
     
     dungeon = [] 
