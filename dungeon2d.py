@@ -393,6 +393,32 @@ class Monster(Dungeonobject):
         
     def init3(self):
         pass
+       
+    def effect_min_max(self, effectname):
+        """takes one effectname ("str", "dex", "int", "hp") as parameter.
+           calculates the max positive effect and the min negative effect
+           from self.effects_[effectname]. returns the sum of min and max,
+           the resulting effect, and sets self.effects_[effectname]_bonus to it"""
+        if effectname not in ("str","dex","int","hp"):
+            pri_input("Error: not yet coded effect name: "+ effectname)
+        
+        effect = "effects_"+effectname
+        bonus = "effects_"+effectname+"_bonus"
+        
+        if len(self.__getattribute__(effect)) > 0:
+            maxvalues = [b for [a,b] in self.__getattribute__(effect) if b > 0]
+            minvalues = [b for [a,b] in self.__getattribute__(effect) if b < 0]
+            if len(maxvalues) > 0:
+                maxeffect = max(maxvalues)
+            else:
+                maxeffect = 0
+            if len(minvalues) > 0:
+                mineffect = min(minvalues)
+            else:
+                mineffect = 0
+            self.__setattr__(bonus, maxeffect + mineffect)
+        
+        
         
     def stat_effects_tick(self):
         """decrease the duration of stat effects"""
@@ -405,64 +431,13 @@ class Monster(Dungeonobject):
         self.effects_dex_bonus = 0
         self.effects_int_bonus = 0
         self.effects_hp_bonus = 0
+        # setting values
+        self.effect_min_max("str")
+        self.effect_min_max("dex")
+        self.effect_min_max("int")
+        self.effect_min_max("hp")
 
-        """calculate maximal negative or positiv str effect for this turn"""
-        if len(self.effects_str) > 0:
-            maxvalues = [b for [a,b] in self.effects_str if b > 0]
-            minvalues = [b for [a,b] in self.effects_str if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_str_bonus = maxeffect + mineffect
-            
-        #    self.effects_str_bonus = max([b for [a,b] in self.effects_str if b > 0]) - min([b for [a,b] in self.effects_str if b < 0])
-        if len(self.effects_dex) > 0:
-            maxvalues = [b for [a,b] in self.effects_dex if b > 0]
-            minvalues = [b for [a,b] in self.effects_dex if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_dex_bonus = maxeffect + mineffect
-             
-        if len(self.effects_int) > 0:
-            maxvalues = [b for [a,b] in self.effects_int if b > 0]
-            minvalues = [b for [a,b] in self.effects_int if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_int_bonus = maxeffect + mineffect
-            
-            
-        if len(self.effects_hp) > 0:
-            maxvalues = [b for [a,b] in self.effects_hp if b > 0]
-            minvalues = [b for [a,b] in self.effects_hp if b < 0]
-            if len(maxvalues) > 0:
-                maxeffect = max(maxvalues)
-            else:
-                maxeffect = 0
-            if len(minvalues) > 0:
-                mineffect = min(minvalues)
-            else:
-                mineffect = 0
-            self.effects_hp_bonus = maxeffect + mineffect
-            
-            
-        
+      
     def drink(self,potion):
         """stats effects from potions"""
         #potion is the Pot class instance
@@ -664,6 +639,28 @@ class Game():
     meleeweapons = {}
     items = {}
     pots = {}
+
+def getFrequency(csvdict, namerow, pricerow):
+    dr = []
+    for entry in csvdict:
+        dr.append([csvdict[entry][namerow], 
+                   csvdict[entry][pricerow]])
+    dr.sort()
+    pricelist1 = [a for [a,b] in dr]    # list of price only
+    itemlist = [b for [a,b] in dr]     # list of drinkname only
+    pricelist2 = []                     # list of added up prices
+    kprice = 0
+    for p in pricelist1:
+        kprice += p
+        pricelist2.append(kprice)
+    return itemlist, pricelist2
+    
+def choose_thing(itemlist, pricelist2):
+    y = random.randint(1,pricelist2[-1]) # random number from 1 to maxprice
+    for p in pricelist2:
+        if y <= p:
+            return itemlist[pricelist2.index(p)] # return name of object
+            
     
 def main():
     
@@ -685,7 +682,8 @@ def main():
                                   int(row["Price"]),
                                   float(row["Equip_Chance"])
                                   ]
-                                  
+    print(Game.zoo)
+    pri_input()                              
     max_price=0    # ----find highest price (wearables dropchance)
     for z in Game.zoo:
         if z == "@" or z == "R":
@@ -1284,7 +1282,7 @@ def main():
             if mymonster.number == Game.hero.number:
                 continue
             if mymonster.z == Game.hero.z:
-                mymonster.move(Game.hero)# makes new dx/dy for monster
+                mymonster.move(Game.hero)  # makes new dx/dy for monster, monsters are hunting player
                 # mage shall not jump out of dungeon
                 width = len(Game.dungeon[Game.hero.z][0])
                 height = len(Game.dungeon[Game.hero.z])
@@ -1292,9 +1290,10 @@ def main():
                     mymonster.dx = 0
                 if mymonster.y+mymonster.dy < 0 or mymonster.y+mymonster.dy >= height:
                     mymonster.dy = 0    
-                    
+                # where does the monster want to go to?    
                 tile = Game.dungeon[mymonster.z][mymonster.y+mymonster.dy][mymonster.x+mymonster.dx]
-                if tile == "#" or tile == "D" or tile == "d":
+                # doors and walls are forbidden
+                if tile == "#" or tile == "D" or tile == "d": 
                     mymonster.dx=0
                     mymonster.dy=0
                 elif mymonster.x+mymonster.dx == Game.hero.x:
@@ -1322,6 +1321,8 @@ def main():
             if mymonster.z == Game.hero.z:
                 if mymonster.y == Game.hero.y+Game.hero.dy:
                     if mymonster.x == Game.hero.x+Game.hero.dx:
+                        Game.hero.dx = 0
+                        Game.hero.dy = 0
                         fight(Game.hero,mymonster) #fight
                         fight(mymonster,Game.hero)
                         if mymonster.hp <1:
@@ -1355,6 +1356,7 @@ def main():
                                 Game.hero.trophy[m] += 1
                             else:
                                 Game.hero.trophy[m] = 1
+                        
                         input("press enter to continue")
                         
         #  remove monster from monsterlist
