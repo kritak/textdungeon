@@ -12,21 +12,15 @@ file name should start with "dungeon"
 import random
 import os
 import csv
+from lib import tools  # cls / pri_input
+#from lib import combat 
 
 
-
-def cls():
-    """clear the screen for windows,mac,linus"""
-    os.system('cls' if os.name=='nt' else 'clear')
 
 def remove_tile(x,y,z,new_tile="."):
     """replace tiles / items with new tile"""
     return  Game.dungeon[z][y][:x] + new_tile + Game.dungeon[z][y][x+1:]
 
-def pri_input(txt=""):
-    """print and wait for input"""
-    print(txt)
-    input("press enter")
 
 def teleport(z):
     """teleport the player to a random floor in lvl z"""
@@ -36,122 +30,7 @@ def teleport(z):
         x,y = teleport(z)
     return x,y,z
 
-def fight(i1,i2):
-    """fighting between two class instances i1 is attacking i2"""
-    if i1.hp <1 or i2.hp <1:
-        return
-    print("{} fights {}".format(i1.name,i2.name))
-    i1weapons = []
-    i1armor = []
-    i2weapons = []
-    i2armor = []
-    #i1weapon equipped?
-    for item in Game.item_list:
-        if item.carried_by == i1.number:
-            if item.__class__.__name__ == "Meleeweapon":
-                if item.equiped:
-                    i1weapons.append(item)
-            if item.__class__.__name__ == "Wearable":
-                if item.worn:
-                    i1armor.append(item)
-        if item.carried_by == i2.number:
-            if item.__class__.__name__ == "Meleeweapon":
-                if item.equiped:
-                    i2weapons.append(item)
-            if item.__class__.__name__ == "Wearable":
-                if item.worn:
-                    i2armor.append(item)
-    #weaponrange
-    i1weaponrange = 0
-    i2weaponrange = 0
-    
-    for w in i1weapons:
-        if w.meleerange > i1weaponrange:
-            i1weaponrange = w.meleerange
-    for w in i2weapons:
-        if w.meleerange > i2weaponrange:
-            i2weaponrange = w.meleerange
-            
-            
-    #all resistence set to 0
-    #random.choose slot to hit
-    #iterate over armor (defender)
-    #check if hit slot has armor(resistence)
-    
 
-        
-                     
-    #---------------- p_feint (int + dex)/100
-    finte = random.random() # 0-1
-    i1_roll = random.randint(1,i1.attack_roll)
-    if finte < (i1.intelligence+i1.dexterity)/100:
-        # attacker uses feint
-        if finte > (i2.intelligence+i2.dexterity)/100:
-            print("feint successful! (roll x3)")
-            i1_roll *= 3
-    #------------------defence roll-----------------------------
-    i2_roll = random.randint(1,i2.attack_roll)       
-    print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
-    #------------------parry chance for defender-----------------
-    if i2weaponrange > i1weaponrange:
-        if random.random()<Game.parrychance:
-            print("defending {} succesfully parried with his longer weapon".format(i2.name))
-            return
-    #----- did i1hit i2 ? --------------
-    # --------------------- i1 hit sucessfully -----------------------
-    if i1_roll > i2_roll:
-        d = random.random()#  0....1
-        # --- is the defender the hero ----
-        armorbonus = 0
-        armorvalue = 0
-        itemname = ""
-        if i2.__class__.__name__ == "Hero":
-            slot = random.choice(Game.slots)
-            for item in Game.item_list:
-                if item.__class__.__name__ == "Wearable":
-                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
-                        #armorbonus = item.armorbonus
-                        #armorvalue = item.armor
-                        itemname = item.name
-                        break
-        damage = random.randint(1,i1.damage)
-        if i1.__class__.__name__ == "Hero" and Game.instakill: 
-            damage = 500
-        if d < i1.strength/100:
-            if d > i2.strength/100:
-                print("critical damage! (x3)")
-                damage *= 3
-        # ------------- damage greater armor? ----------
-        if damage > (armorvalue+armorbonus):
-            print("damage is reduced by {} points of {} ".format(armorvalue+armorbonus,itemname))
-            damage -= (armorvalue+armorbonus)
-        else:
-            # ----- armor soaks up damage completely -------
-            print("the damage {} cannot penetrate the armor {} of {}".format(damage,armorvalue+armorbonus,itemname))
-            damage = 0
-        i2.hp -= damage
-        print("{} wins this round and makes {} damage".format(i1.name, damage))
-        print("{} has {} hp left".format(i2.name,int(i2.hp)))
-        if i2.hp < 1:
-            print("{} lose, {} wins the fight".format(i2.name,i1.name))
-        #else:
-           # i1.dx=0
-           # i1.dy=0
-           # i2.dx=0
-           # i2.dy=0
-    # --------------- i1 misses, i2 attacks instead------------
-    elif i1_roll == i2_roll:
-        print("its a draw - no damage taken")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
-    else:
-        print("attack failed.. no damage")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
             
             
 class Dungeonobject():
@@ -174,7 +53,7 @@ class Dungeonobject():
         elif self.symbol in Game.items:
             self.name=Game.items[self.symbol][0]
         else:
-            pri_input("symbol not found: {}".format(self.symbol))
+            tools.pri_input("symbol not found: {}".format(self.symbol))
             # error!!!
         self.init2()
     
@@ -445,7 +324,7 @@ class Monster(Dungeonobject):
            from self.effects_[effectname]. returns the sum of min and max,
            the resulting effect, and sets self.effects_[effectname]_bonus to it"""
         if effectname not in ("str","dex","int","hp"):
-            pri_input("Error: not yet coded effect name: "+ effectname)
+            tools.pri_input("Error: not yet coded effect name: "+ effectname)
         
         effect = "effects_"+effectname
         bonus = "effects_"+effectname+"_bonus"
@@ -587,7 +466,7 @@ class Monster(Dungeonobject):
             if i.carried_by == self.number :
                 print(i.name)
         if wait:
-            pri_input()
+            tools.pri_input()
         
         
       #  for x in range(10):
@@ -713,6 +592,123 @@ def choose_thing(itemlist, pricelist2):
         if y <= p:
             return itemlist[pricelist2.index(p)] # return name of object
             
+            
+def fight(i1,i2):
+    """fighting between two class instances i1 is attacking i2"""
+    if i1.hp <1 or i2.hp <1:
+        return
+    print("{} fights {}".format(i1.name,i2.name))
+    i1weapons = []
+    i1armor = []
+    i2weapons = []
+    i2armor = []
+    #i1weapon equipped?
+    for item in Game.item_list:
+        if item.carried_by == i1.number:
+            if item.__class__.__name__ == "Meleeweapon":
+                if item.equiped:
+                    i1weapons.append(item)
+            if item.__class__.__name__ == "Wearable":
+                if item.worn:
+                    i1armor.append(item)
+        if item.carried_by == i2.number:
+            if item.__class__.__name__ == "Meleeweapon":
+                if item.equiped:
+                    i2weapons.append(item)
+            if item.__class__.__name__ == "Wearable":
+                if item.worn:
+                    i2armor.append(item)
+    #weaponrange
+    i1weaponrange = 0
+    i2weaponrange = 0
+    
+    for w in i1weapons:
+        if w.meleerange > i1weaponrange:
+            i1weaponrange = w.meleerange
+    for w in i2weapons:
+        if w.meleerange > i2weaponrange:
+            i2weaponrange = w.meleerange
+            
+            
+    #all resistence set to 0
+    #random.choose slot to hit
+    #iterate over armor (defender)
+    #check if hit slot has armor(resistence)
+    
+
+        
+                     
+    #---------------- p_feint (int + dex)/100
+    finte = random.random() # 0-1
+    i1_roll = random.randint(1,i1.attack_roll)
+    if finte < (i1.intelligence+i1.dexterity)/100:
+        # attacker uses feint
+        if finte > (i2.intelligence+i2.dexterity)/100:
+            print("feint successful! (roll x3)")
+            i1_roll *= 3
+    #------------------defence roll-----------------------------
+    i2_roll = random.randint(1,i2.attack_roll)       
+    print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
+    #------------------parry chance for defender-----------------
+    if i2weaponrange > i1weaponrange:
+        if random.random()<Game.parrychance:
+            print("defending {} succesfully parried with his longer weapon".format(i2.name))
+            return
+    #----- did i1hit i2 ? --------------
+    # --------------------- i1 hit sucessfully -----------------------
+    if i1_roll > i2_roll:
+        d = random.random()#  0....1
+        # --- is the defender the hero ----
+        armorbonus = 0
+        armorvalue = 0
+        itemname = ""
+        if i2.__class__.__name__ == "Hero":
+            slot = random.choice(Game.slots)
+            for item in Game.item_list:
+                if item.__class__.__name__ == "Wearable":
+                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
+                        #armorbonus = item.armorbonus
+                        #armorvalue = item.armor
+                        itemname = item.name
+                        break
+        damage = random.randint(1,i1.damage)
+        if i1.__class__.__name__ == "Hero" and Game.instakill: 
+            damage = 500
+        if d < i1.strength/100:
+            if d > i2.strength/100:
+                print("critical damage! (x3)")
+                damage *= 3
+        # ------------- damage greater armor? ----------
+        if damage > (armorvalue+armorbonus):
+            print("damage is reduced by {} points of {} ".format(armorvalue+armorbonus,itemname))
+            damage -= (armorvalue+armorbonus)
+        else:
+            # ----- armor soaks up damage completely -------
+            print("the damage {} cannot penetrate the armor {} of {}".format(damage,armorvalue+armorbonus,itemname))
+            damage = 0
+        i2.hp -= damage
+        print("{} wins this round and makes {} damage".format(i1.name, damage))
+        print("{} has {} hp left".format(i2.name,int(i2.hp)))
+        if i2.hp < 1:
+            print("{} lose, {} wins the fight".format(i2.name,i1.name))
+        #else:
+           # i1.dx=0
+           # i1.dy=0
+           # i2.dx=0
+           # i2.dy=0
+    # --------------- i1 misses, i2 attacks instead------------
+    elif i1_roll == i2_roll:
+        print("its a draw - no damage taken")
+       # i1.dx=0
+       # i1.dy=0
+       # i2.dx=0
+       # i2.dy=0
+    else:
+        print("attack failed.. no damage")
+       # i1.dx=0
+       # i1.dy=0
+       # i2.dx=0
+       # i2.dy=0
     
 def main():
     
@@ -947,7 +943,7 @@ def main():
 
 
         
-    pri_input(commands)
+    tools.pri_input(commands)
 
 
 
@@ -962,7 +958,7 @@ def main():
         
         #     --------------paint the dungeon------------------
         
-        cls()
+        tools.cls()
         print("food: {} gold: {} key: {} healthpot: {} inv: {}".format(
               len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "food"]),
               len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "gold"]),
@@ -1066,14 +1062,14 @@ def main():
         if tile == "<":
             if c == "" or c == "<":
                 if Game.hero.z == 0:
-                    pri_input("you leave the dungeon and return to town")
+                    tools.pri_input("you leave the dungeon and return to town")
                     break
                 Game.hero.z -= 1  # climb up
                 Game.hero.hunger += 2
         elif tile == ">":
             if c == "" or c == ">":
                 if Game.hero.z == len(Game.dungeon)-1:
-                    pri_input("you already reached the deepest dungeon")
+                    tools.pri_input("you already reached the deepest dungeon")
                 else:
                     Game.hero.z += 1    # climb down
                     Game.hero.hunger += 2
@@ -1097,7 +1093,7 @@ def main():
         
         
         elif c == "i" or c == "inventory":
-            cls()
+            tools.cls()
             rucksack = {}
             for item in Game.item_list:
                 if item.carried_by == Game.hero.number:
@@ -1123,7 +1119,7 @@ def main():
                               "" if item.boni == 0 else "\n                    boni: str {} dex {} int {} luck {}".format(
                               item.strengthbonus,item.dexteritybonus,item.intelligencebonus,item.luckbonus)))
                 w = input("enter number of item to wear/remove or press enter to continue")
-                cls()
+                tools.cls()
                 try:
                     w = int(w)
                 except:
@@ -1159,7 +1155,7 @@ def main():
                               "\n                    malus: (hero not qualified) \n                           min_str {} ({:.0f}) \n                           min_dex {} ({:.0f}) \n                           min_int {} ({:.0f})".format(
                                item.min_str, Game.hero.strength,item.min_dex,Game.hero.dexterity,item.min_int,Game.hero.intelligence)))
                 m = input("enter number of item to wield/unwield or press enter to continue")
-                cls()
+                tools.cls()
                 try:
                     m = int(m)
                 except:
@@ -1195,7 +1191,7 @@ def main():
                     if item.symbol == "p" and item.carried_by == Game.hero.number:
                         print(" {} {}".format(item.number,item.name))
                 p = input("enter number of potion to drink or press enter to continue")
-                cls()
+                tools.cls()
                 try:
                     p = int(p)
                 except:
@@ -1237,20 +1233,20 @@ def main():
                             item.x,item.y,item.z = Game.hero.x,Game.hero.y,Game.hero.z
                             print("dropped 1 {}".format(item.name))
                             break
-                pri_input()
+                tools.pri_input()
                             
                         
                     
         elif c == "help" or c == "?":
-            pri_input(legend)
-            pri_input(commands)
+            tools.pri_input(legend)
+            tools.pri_input(commands)
 
         elif c == "e" or c == "eat":
             
             #if hero.food <= 0:
             if  len([i for i in Game.item_list if i.carried_by == Game.hero.number and i.name == "food"]) <= 0:
                 
-                pri_input("you have no food!")
+                tools.pri_input("you have no food!")
             else: 
                 #hero.food -= 1
                 n=-1
@@ -1278,7 +1274,7 @@ def main():
                     for mymonster in Game.monster_list:
                         if mymonster.z == Game.hero.z and mymonster.x == Game.hero.x+dx and mymonster.y == Game.hero.y+dy:
                             mymonster.hello(wait = False)
-            pri_input()
+            tools.pri_input()
             
         #--------- potion effects ---------------------------
         for mymonster in Game.monster_list:
@@ -1287,7 +1283,7 @@ def main():
         #  remove monster from monsterlist
         if Game.hero.hp + Game.hero.effects_hp_bonus < 0:
             print("you die due to negative hitpoints")
-            pri_input()
+            tools.pri_input()
         Game.monster_list = [m for m in Game.monster_list if (m.hp + m.effects_hp_bonus) > 0]
                 
                 
@@ -1295,12 +1291,12 @@ def main():
         # -------- check if movement is possible -------------
         tile = Game.dungeon[Game.hero.z][Game.hero.y+Game.hero.dy][Game.hero.x+Game.hero.dx]
         if tile == "#":   # hero runs into wall
-            pri_input("you run into a wall, ouch!")
+            tools.pri_input("you run into a wall, ouch!")
             Game.hero.hp -= 1
             Game.hero.dx=0
             Game.hero.dy=0
         if tile == "D":   # hero runs into door
-            pri_input("a big door find a way to open it")
+            tools.pri_input("a big door find a way to open it")
             Game.hero.dx=0
             Game.hero.dy=0
         if tile == "d":
@@ -1314,7 +1310,7 @@ def main():
                 Game.item_list = [i for i in Game.item_list if i.number != n]
                 Game.dungeon[Game.hero.z][Game.hero.y+Game.hero.dy] = remove_tile(Game.hero.x+Game.hero.dx,Game.hero.y+Game.hero.dy,Game.hero.z)
             else:
-                pri_input("a small door find a key to open it")
+                tools.pri_input("a small door find a key to open it")
                 Game.hero.dx=0
                 Game.hero.dy=0
 
@@ -1401,7 +1397,7 @@ def main():
                                         i.y = mymonster.y
                                         i.z = mymonster.z
                             if droppings:
-                                pri_input()
+                                tools.pri_input()
                             Game.hero.history.append("turn {}: slain a {}".format(turns,mymonster.__class__.__name__))
                             m = mymonster.__class__.__name__
                             if m in Game.hero.trophy:
