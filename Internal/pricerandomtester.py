@@ -13,7 +13,7 @@ d = {"healing":50,
      
 # reverse d
 
-dr = [[b,a] for [a,b] in d.items()] # list of [price, drinkname]
+dr = [[1/b,a] for [a,b] in d.items()] # list of [price, drinkname]
 dr.sort()                           # sort this list by price
 pricelist1 = [a for [a,b] in dr]    # list of price only
 drinklist = [b for [a,b] in dr]     # list of drinkname only
@@ -28,10 +28,10 @@ print(pricelist1, pricelist2)
 
 result = {}
 
-for x in range(1000):
-    pass
+for x in range(10000):
     
-    y = random.randint(1,pricelist2[-1]) # 1 to maxprice
+    
+    y = random.random()*(pricelist2[-1]) # 1 to maxprice
     for p in pricelist2:
         if y < p:
             drinkname = drinklist[pricelist2.index(p)]
