@@ -646,7 +646,7 @@ def getFrequency(csvdict, namerow, pricerow):
         dr.append([csvdict[entry][namerow], 
                    csvdict[entry][pricerow]])
     dr.sort()
-    pricelist1 = [a for [a,b] in dr]    # list of price only
+    pricelist1 = [1/a for [a,b] in dr]    # list of price only
     itemlist = [b for [a,b] in dr]     # list of drinkname only
     pricelist2 = []                     # list of added up prices
     kprice = 0
@@ -656,7 +656,7 @@ def getFrequency(csvdict, namerow, pricerow):
     return itemlist, pricelist2
     
 def choose_thing(itemlist, pricelist2):
-    y = random.randint(1,pricelist2[-1]) # random number from 1 to maxprice
+    y = random.random()*(pricelist2[-1]) # random number from 1 to maxprice
     for p in pricelist2:
         if y <= p:
             return itemlist[pricelist2.index(p)] # return name of object
@@ -682,8 +682,8 @@ def main():
                                   int(row["Price"]),
                                   float(row["Equip_Chance"])
                                   ]
-    print(Game.zoo)
-    pri_input()                              
+    #print(Game.zoo)
+    #pri_input()                              
     max_price=0    # ----find highest price (wearables dropchance)
     for z in Game.zoo:
         if z == "@" or z == "R":
@@ -1104,7 +1104,7 @@ def main():
                               "" if item.boni == 0 else "\n                    boni: att {} def {} str {} dex {} int {}".format(
                               item.attackbonus,item.defensebonus,item.strengthbonus,item.dexteritybonus,item.intelligencebonus),
                               "" if Game.hero.strength >= item.min_str and Game.hero.dexterity >= item.min_dex and Game.hero.intelligence >= item.min_int else
-                              "\n                    malus: (hero not qualified) min_str {} str {} min_dex {} dex {} min_int {} int {}".format(
+                              "\n                    malus: (hero not qualified) \n                           min_str {} ({:.0f}) \n                           min_dex {} ({:.0f}) \n                           min_int {} ({:.0f})".format(
                                item.min_str, Game.hero.strength,item.min_dex,Game.hero.dexterity,item.min_int,Game.hero.intelligence)))
                 m = input("enter number of item to wield/unwield or press enter to continue")
                 cls()
