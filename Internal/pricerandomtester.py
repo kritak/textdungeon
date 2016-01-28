@@ -27,7 +27,7 @@ for p in pricelist1:
 print(pricelist1, pricelist2)
 
 result = {}
-
+print("calculating please wait...")
 for x in range(10000):
     
     
