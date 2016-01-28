@@ -639,6 +639,28 @@ class Game():
     meleeweapons = {}
     items = {}
     pots = {}
+
+def getFrequency(csvdict, namerow, pricerow):
+    dr = []
+    for entry in csvdict:
+        dr.append([csvdict[entry][namerow], 
+                   csvdict[entry][pricerow]])
+    dr.sort()
+    pricelist1 = [a for [a,b] in dr]    # list of price only
+    itemlist = [b for [a,b] in dr]     # list of drinkname only
+    pricelist2 = []                     # list of added up prices
+    kprice = 0
+    for p in pricelist1:
+        kprice += p
+        pricelist2.append(kprice)
+    return itemlist, pricelist2
+    
+def choose_thing(itemlist, pricelist2):
+    y = random.randint(1,pricelist2[-1]) # random number from 1 to maxprice
+    for p in pricelist2:
+        if y <= p:
+            return itemlist[pricelist2.index(p)] # return name of object
+            
     
 def main():
     
@@ -660,7 +682,8 @@ def main():
                                   int(row["Price"]),
                                   float(row["Equip_Chance"])
                                   ]
-                                  
+    print(Game.zoo)
+    pri_input()                              
     max_price=0    # ----find highest price (wearables dropchance)
     for z in Game.zoo:
         if z == "@" or z == "R":
