@@ -288,7 +288,7 @@ class Monster(Dungeonobject):
         
         self.free_slots = 2
         self.sigma=Game.zoo[self.symbol][8]
-        self.damage=Game.zoo[self.symbol][2]
+        self.damage=Game.zoo[self.symbol][2]   # TODO unnötig > wird über stärke berechnet! (soll berechnet werden)
         self.attack_roll=Game.zoo[self.symbol][1]
         self.attack1=Game.zoo[self.symbol][3]       
         self.dx=0
@@ -541,13 +541,7 @@ class Goblin(Monster):
         #items
         # class item/monster > code dupliziert "eltern klasse > object"
         
-class Rect():
-    """dungeon creator// a rectangle on the map used to charecterize a room"""
-    def __init__(self, x, y, w, h):
-        self.x1 = x
-        self.y1 = y
-        self.x2 = x + w
-        self.y2 = y + h
+
         
     
 class Game():
@@ -662,16 +656,24 @@ def fight(i1,i2):
         armorbonus = 0
         armorvalue = 0
         itemname = ""
-        if i2.__class__.__name__ == "Hero":
+        if i2.__class__.__name__ == "Hero": #auskommentieren
             slot = random.choice(Game.slots)
-            for item in Game.item_list:
-                if item.__class__.__name__ == "Wearable":
-                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn:
+            for item in Game.item_list:  #game.item_list wird zu i2armor
+                if item.__class__.__name__ == "Wearable": #wird entfernt > i2armor sind nur wearables
+                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn: #nach slot auskommentieren
                         #armorbonus = item.armorbonus
                         #armorvalue = item.armor
                         itemname = item.name
                         break
-        damage = random.randint(1,i1.damage)
+        #damage durch stärke und waffe definieren NICHT über den zoo
+        #angreiferstärke ist i1.strength / i1weapons (welche benutz wird bei dualwield)
+        #erste waffe von i1: i1weapons[0] 
+        #zweite waffe von i1: i1weapons[1]
+        # myweapon =  random.choice(i1weapons)
+        # if myweapon.twohand: # ...
+        # if myweapon.slice: # ...
+        # myweapon.weight # für damage calculation 
+        damage = random.randint(1,i1.damage) #pierce,slice,crush (bonus damage?) (i1weapons > sind waffen)
         if i1.__class__.__name__ == "Hero" and Game.instakill: 
             damage = 500
         if d < i1.strength/100:
@@ -691,24 +693,14 @@ def fight(i1,i2):
         print("{} has {} hp left".format(i2.name,int(i2.hp)))
         if i2.hp < 1:
             print("{} lose, {} wins the fight".format(i2.name,i1.name))
-        #else:
-           # i1.dx=0
-           # i1.dy=0
-           # i2.dx=0
-           # i2.dy=0
+
     # --------------- i1 misses, i2 attacks instead------------
     elif i1_roll == i2_roll:
         print("its a draw - no damage taken")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
+
     else:
         print("attack failed.. no damage")
-       # i1.dx=0
-       # i1.dy=0
-       # i2.dx=0
-       # i2.dy=0
+
     
 def main():
     
