@@ -702,7 +702,7 @@ def fight(i1,i2):
         # if myweapon.twohand: # ...
         # if myweapon.slice: # ...
         # myweapon.weight # für damage calculation 
-        damage = random.randint(1,i1.damage) #pierce,slice,crush (bonus damage?) (i1weapons > sind waffen)
+        damage = random.randint(1,int(i1.damage+i1pierce+i1slice+i1crush+i1.strength))
         if i1.__class__.__name__ == "Hero" and Game.instakill: 
             damage = 500
         if d < i1.strength/100:
@@ -711,11 +711,11 @@ def fight(i1,i2):
                 damage *= 3
         # ------------- damage greater armor? ----------
         if damage > (i2prot_pierce+i2prot_slice+i2prot_crush):
-            print("damage is reduced by {} points\n of {} ".format(i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
+            print("damage is reduced by {} points\nof {} ".format(i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
             damage -= (i2prot_pierce+i2prot_slice+i2prot_crush)
         else:
             # ----- armor soaks up damage completely -------
-            print("the damage {} cannot penetrate the armor {} of {}".format(damage,i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
+            print("the damage {} cannot penetrate the armor {} \nof {}".format(damage,i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
             damage = 0
         i2.hp -= damage
         print("{} wins this round and makes {} damage".format(i1.name, damage))
