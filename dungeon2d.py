@@ -623,7 +623,39 @@ def fight(i1,i2):
         if w.meleerange > i2weaponrange:
             i2weaponrange = w.meleerange
             
-            
+    #resistence / attackmodi        
+    i1pierce = 0
+    i1slice = 0
+    i1crush = 0
+    i2prot_pierce = 0
+    i2prot_slice = 0
+    i2prot_crush = 0
+    
+    
+    
+    for w in i1weapons:
+        if w.pierce > i1pierce:
+            i1pierce = w.pierce
+    for w in i1weapons:
+        if w.slice > i1slice:
+            i1slice = w.slice
+    for w in i1weapons:
+        if w.crush > i1crush:
+            i1crush = w.crush
+    for w in i2armor:
+        if w.prot_pierce > i2prot_pierce:
+            i2prot_pierce = w.prot_pierce
+    for w in i2armor:
+        if w.prot_slice > i2prot_slice:
+            i2prot_slice = w.prot_slice
+    for w in i2armor:
+        if w.prot_crush > i2prot_crush:
+            i2prot_crush = w.prot_crush
+        
+    
+    
+    
+    
     #all resistence set to 0
     #random.choose slot to hit
     #iterate over armor (defender)
@@ -653,17 +685,14 @@ def fight(i1,i2):
     if i1_roll > i2_roll:
         d = random.random()#  0....1
         # --- is the defender the hero ----
-        armorbonus = 0
-        armorvalue = 0
         itemname = ""
         if i2.__class__.__name__ == "Hero": #auskommentieren
             slot = random.choice(Game.slots)
-            for item in Game.item_list:  #game.item_list wird zu i2armor
-                if item.__class__.__name__ == "Wearable": #wird entfernt > i2armor sind nur wearables
-                    if item.slot == slot and item.carried_by == Game.hero.number and item.worn: #nach slot auskommentieren
-                        #armorbonus = item.armorbonus
-                        #armorvalue = item.armor
+            for item in i2armor:
+                if i2armor:
+                    if item.slot == slot:
                         itemname = item.name
+                       # slot = random.choice(head,neck,body,hands,legs,feet)
                         break
         #damage durch stärke und waffe definieren NICHT über den zoo
         #angreiferstärke ist i1.strength / i1weapons (welche benutz wird bei dualwield)
@@ -681,12 +710,12 @@ def fight(i1,i2):
                 print("critical damage! (x3)")
                 damage *= 3
         # ------------- damage greater armor? ----------
-        if damage > (armorvalue+armorbonus):
-            print("damage is reduced by {} points of {} ".format(armorvalue+armorbonus,itemname))
-            damage -= (armorvalue+armorbonus)
+        if damage > (i2prot_pierce+i2prot_slice+i2prot_crush):
+            print("damage is reduced by {} points\n of {} ".format(i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
+            damage -= (i2prot_pierce+i2prot_slice+i2prot_crush)
         else:
             # ----- armor soaks up damage completely -------
-            print("the damage {} cannot penetrate the armor {} of {}".format(damage,armorvalue+armorbonus,itemname))
+            print("the damage {} cannot penetrate the armor {} of {}".format(damage,i2prot_pierce+i2prot_slice+i2prot_crush,itemname))
             damage = 0
         i2.hp -= damage
         print("{} wins this round and makes {} damage".format(i1.name, damage))
