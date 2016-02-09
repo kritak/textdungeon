@@ -8,3 +8,9 @@ spoils_of_war_chance= 0.15
 parrychance= 0.33
 # set true for cheatmode!
 instakill = False
+# damage multiplayer for twohand weapon
+twohand_damagebonus = 2.0
+# damage malus because weapon is too complicated
+damage_malus = 0.40 
+# critical_damage_bonus in fight
+crit_damage_bonus = 3.0
