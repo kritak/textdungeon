@@ -14,6 +14,7 @@ import os
 import csv
 from lib import tools  # cls / pri_input
 #from lib import combat 
+from lib import settings
 
 
 
@@ -546,9 +547,7 @@ class Goblin(Monster):
     
 class Game():
     
-    spoils_of_war_chance= 0.15 #chance of slain monster to drop item
-    parrychance= 0.33 # parrychance to block attack - longer weaponrange of defender
-    instakill = False  # set true for cheatmode!
+    
     
     dungeon = [] 
     monster_list = []
@@ -677,7 +676,7 @@ def fight(i1,i2):
     print("{} rolls: {}, {} rolls: {} ".format(i1.name,i1_roll,i2.name,i2_roll))
     #------------------parry chance for defender-----------------
     if i2weaponrange > i1weaponrange:
-        if random.random()<Game.parrychance:
+        if random.random()<settings.parrychance:
             print("defending {} succesfully parried with his longer weapon".format(i2.name))
             return
     #----- did i1hit i2 ? --------------
@@ -703,7 +702,7 @@ def fight(i1,i2):
         # if myweapon.slice: # ...
         # myweapon.weight # für damage calculation 
         damage = random.randint(1,int(i1.damage+i1pierce+i1slice+i1crush+i1.strength))
-        if i1.__class__.__name__ == "Hero" and Game.instakill: 
+        if i1.__class__.__name__ == "Hero" and settings.instakill: 
             damage = 500
         if d < i1.strength/100:
             if d > i2.strength/100:
@@ -1410,7 +1409,7 @@ def main():
                                 droppings = True
                             for i in Game.item_list:
                                 if i.carried_by == mymonster.number:
-                                    if random.random() < Game.spoils_of_war_chance:
+                                    if random.random() < settings.spoils_of_war_chance:
                                         droppings = True
                                         print("spoils of war: ", i.name)
                                         i.carried_by = False
