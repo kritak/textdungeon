@@ -5,6 +5,9 @@ import random
 import os
 
 
+LOOTCHANCE = 0.05
+MONSTERCHANCE = 0.05
+
 def cls():
     """clear the screen for windows,mac,linus"""
     os.system('cls' if os.name=='nt' else 'clear')
@@ -18,7 +21,7 @@ class Game():
     maxheight = 18
     minheight = 18
     stairs = 3
-    rooms_per_level = 2
+    rooms_per_level = 10
     #             "c": "chest",
     #             "+" : "shop",
     #             "s" : "scroll",
@@ -86,8 +89,9 @@ def main():
         
         
         
-        # room made ------------------------                
+        # ----------room made -----------------       
         rooms.append(myroom)
+        
         
     # grabe verbindungsgang
     
@@ -107,8 +111,7 @@ def main():
             # runtergraben von start nach ziel
             # wer ist links (niedrigeres x)
             if start[0] <= ziel[0]:
-                # nach rechts graben von start nach ziel
-                # 2 räume dazutun
+                # start nach ziel
                 # nach rechts graben
                 c1 = Rect(start[0], start[1], ziel[0]-start[0],0)
                 corridors.append(c1)
@@ -116,17 +119,32 @@ def main():
                 c2 = Rect(c1.x2, c1.y2, 0, ziel[1]-start[1])
                 corridors.append(c2)  
             else:
-                pass
-                # nach rechts graben von ziel nach start
+                # nach links graben
+                c1 = Rect(ziel[0], start[1],start[0]-ziel[0],0)
+                corridors.append(c1)
+                #nach unten graben
+                c2 = Rect(ziel[0], start[1], 0, ziel[1]-start[1])
+                corridors.append(c2)
+
         else:
             # runtergraben von ziel nach start
             # wer ist links (niedrigeres x)
             if start[0] <= ziel[0]:
-                pass
-                # nach rechts graben von start nach ziel
-            else:
-                pass
-                # nach rechts graben von ziel nach start
+                #nach links graben
+                c1 = Rect(start[0], ziel[1], ziel[0]-start[0],0)
+                corridors.append(c1)
+                #nach unten graben
+                c2 = Rect(start[0],ziel[1], 0, start[1]-ziel[1])
+                corridors.append(c2)
+                #print("now")
+                
+            else:  
+                # nach rechts graben
+                c1 = Rect(ziel[0], ziel[1], start[0]-ziel[0],0)
+                corridors.append(c1)
+                # nach unten graben
+                c2 = Rect(c1.x2, c1.y2, 0, start[1]-ziel[1])
+                corridors.append(c2)
         
         
     
@@ -136,7 +154,14 @@ def main():
             for x in range(width):
                 if y >= myroom.y and y <= myroom.y2:
                     if x >= myroom.x and x <= myroom.x2:
-                        level[y] = level[y][:x] + "." + level[y][x+1:]
+                        tile = "."
+                        # ---------- fill room with loot ----------
+                        if random.random() < LOOTCHANCE:
+                            tile = "r"
+                        # -------- fill room with monsters ---------
+                        if random.random() < MONSTERCHANCE:
+                            tile = "R"
+                        level[y] = level[y][:x] + tile + level[y][x+1:]
     
     for myroom in corridors:
         for y in range(height):
@@ -168,6 +193,7 @@ def main():
     cls()
     for line in level:
         print(line)
+    print(Game.number)
     input()
     
 
@@ -177,5 +203,5 @@ def main():
 
 
 if __name__=="__main__":
-    for a in range(20):
+    for a in range(40):
         main()
