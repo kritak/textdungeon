@@ -414,8 +414,11 @@ class Monster(Dungeonobject):
             #weapon
             m = Meleeweapon(self.x,self.y,self.z,"m", carried_by = self.number)
             m.equiped = True
+            if m.twohand:
+                self.free_slots -= 2
+            else:
+                self.free_slots -= 1
             Game.item_list.append(m)
-            #self.hello()
             # Todo 2 hand weapon for monster - dualwield
         
         
@@ -728,8 +731,7 @@ def main():
                                   int(row["Price"]),
                                   float(row["Equip_Chance"])
                                   ]
-    #print(Game.zoo)
-    #pri_input()                              
+                              
     max_price=0    # ----find highest price (wearables dropchance)
     for z in Game.zoo:
         if z == "@" or z == "R":
